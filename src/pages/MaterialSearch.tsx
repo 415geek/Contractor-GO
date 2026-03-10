@@ -231,18 +231,22 @@ const MaterialSearch = () => {
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-lg font-bold text-slate-900">比价结果</h2>
-              <span className="text-xs text-slate-400">实时价格</span>
+              <span className="text-xs text-slate-400">点击查看详情</span>
             </div>
             
             {results.map((item) => (
-              <Card key={item.id} className="border-none shadow-sm rounded-2xl overflow-hidden">
+              <Card
+                key={item.id}
+                className="border-none shadow-sm rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow active:scale-[0.99]"
+                onClick={() => item.link && item.link !== '#' && window.open(item.link, '_blank')}
+              >
                 <CardContent className="p-4">
                   <div className="flex gap-3">
                     {item.thumbnail && (
-                      <img 
-                        src={item.thumbnail} 
-                        alt={item.name} 
-                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                      <img
+                        src={item.thumbnail}
+                        alt={item.name}
+                        className="w-20 h-20 object-cover rounded-lg flex-shrink-0 bg-slate-100"
                       />
                     )}
                     <div className="flex-1 min-w-0">
@@ -257,28 +261,24 @@ const MaterialSearch = () => {
                       </div>
                       <h3 className="text-xs text-slate-600 mt-1 line-clamp-2">{item.name}</h3>
                       <div className="flex items-center justify-between mt-2">
-                        <div className="text-lg font-bold text-indigo-600">{item.price}</div>
-                        <div className={cn("text-[10px] font-medium", item.stock === '有货' ? "text-green-500" : "text-amber-500")}>
+                        <div className="text-xl font-bold text-indigo-600">{item.price}</div>
+                        <div className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full",
+                          item.stock === '有货' ? "text-green-600 bg-green-50" : "text-amber-600 bg-amber-50"
+                        )}>
                           {item.stock}
                         </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
                     <div className="flex items-center text-[11px] text-slate-400">
                       <MapPin className="h-3 w-3 mr-1" />
-                      <span className="truncate max-w-[120px]">{item.address}</span>
+                      <span className="truncate max-w-[140px]">{item.address}</span>
                     </div>
-                    {item.link && item.link !== '#' && (
-                      <Button 
-                        size="sm" 
-                        className="h-7 rounded-lg bg-indigo-600 text-[11px]"
-                        onClick={() => window.open(item.link, '_blank')}
-                      >
-                        <ExternalLink className="h-3 w-3 mr-1" /> 去购买
-                      </Button>
-                    )}
+                    <div className="flex items-center text-indigo-600 text-xs font-medium">
+                      查看详情 <ExternalLink className="h-3 w-3 ml-1" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
