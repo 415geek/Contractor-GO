@@ -18,69 +18,67 @@ const clients = [
 
 const Clients = () => {
   return (
-    <AppLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold text-slate-900">客户管理</h1>
-          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">
-            <Plus className="mr-2 h-4 w-4" /> 添加新客户
-          </Button>
-        </div>
-
+    <AppLayout title="客户管理">
+      <div className="p-4 space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input placeholder="搜索客户姓名、电话或邮箱..." className="pl-10 rounded-xl border-slate-200" />
+          <Input placeholder="搜索客户姓名或电话..." className="pl-10 rounded-xl border-slate-200 bg-white" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="space-y-3">
           {clients.map((client) => (
-            <Card key={client.id} className="border-none shadow-sm hover:shadow-md transition-all duration-200 rounded-2xl overflow-hidden">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-6">
+            <Card key={client.id} className="border-none shadow-sm rounded-2xl overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center">
-                    <Avatar className="h-12 w-12 border-2 border-indigo-50">
+                    <Avatar className="h-10 w-10 rounded-full">
                       <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold">
                         {client.name[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-bold text-slate-900">{client.name}</h3>
-                      <p className="text-xs text-slate-500">最后活跃: {client.lastActive}</p>
+                    <div className="ml-3">
+                      <h3 className="font-bold text-slate-900">{client.name}</h3>
+                      <p className="text-[10px] text-slate-400">最后活跃: {client.lastActive}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-slate-400">
-                    <MoreVertical className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="text-slate-400 h-8 w-8">
+                    <MoreVertical className="h-4 w-4" />
                   </Button>
                 </div>
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center text-sm text-slate-600">
-                    <Phone className="h-4 w-4 mr-3 text-slate-400" />
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-xs text-slate-600">
+                    <Phone className="h-3 w-3 mr-2 text-slate-400" />
                     {client.phone}
                   </div>
-                  <div className="flex items-center text-sm text-slate-600">
-                    <Mail className="h-4 w-4 mr-3 text-slate-400" />
-                    {client.email}
-                  </div>
-                  <div className="flex items-center text-sm text-slate-600">
-                    <MapPin className="h-4 w-4 mr-3 text-slate-400" />
+                  <div className="flex items-center text-xs text-slate-600">
+                    <MapPin className="h-3 w-3 mr-2 text-slate-400" />
                     <span className="truncate">{client.address}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-6 border-t border-slate-50">
-                  <div className="text-sm">
+                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                  <div className="text-[11px]">
                     <span className="font-bold text-slate-900">{client.jobs}</span>
-                    <span className="text-slate-500 ml-1">个项目</span>
+                    <span className="text-slate-500 ml-1">个合作项目</span>
                   </div>
-                  <Button variant="outline" size="sm" className="rounded-lg border-slate-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-100">
-                    查看历史
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" className="h-7 rounded-lg text-[11px] border-slate-200">
+                      联系客户
+                    </Button>
+                    <Button size="sm" className="h-7 rounded-lg text-[11px] bg-indigo-600">
+                      查看历史
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        <Button className="w-full h-12 rounded-xl bg-white text-indigo-600 border border-indigo-100 shadow-sm mt-4">
+          <Plus className="mr-2 h-5 w-5" /> 添加新客户
+        </Button>
       </div>
     </AppLayout>
   );

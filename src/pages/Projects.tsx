@@ -2,7 +2,8 @@
 
 import React from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Plus, Calendar, MapPin, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Calendar, MapPin, ChevronRight, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,16 +16,31 @@ const projects = [
 ];
 
 const Projects = () => {
+  const navigate = useNavigate();
+
   return (
     <AppLayout title="项目管理">
       <div className="p-4 space-y-4">
-        <Button className="w-full h-12 rounded-xl bg-indigo-600 shadow-md">
-          <Plus className="mr-2 h-5 w-5" /> 新建项目
-        </Button>
+        <div className="flex gap-3">
+          <Button className="flex-1 h-12 rounded-xl bg-indigo-600 shadow-md">
+            <Plus className="mr-2 h-5 w-5" /> 新建项目
+          </Button>
+          <Button 
+            variant="outline" 
+            className="h-12 rounded-xl border-slate-200 bg-white text-slate-600"
+            onClick={() => navigate('/clients')}
+          >
+            <Users className="h-5 w-5" />
+          </Button>
+        </div>
 
         <div className="space-y-3">
           {projects.map((project) => (
-            <Card key={project.id} className="border-none shadow-sm rounded-2xl overflow-hidden active:scale-[0.98] transition-transform">
+            <Card 
+              key={project.id} 
+              onClick={() => navigate(`/project/${project.id}`)}
+              className="border-none shadow-sm rounded-2xl overflow-hidden active:scale-[0.98] transition-transform cursor-pointer"
+            >
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div>
@@ -53,9 +69,9 @@ const Projects = () => {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-50 flex justify-end">
-                  <Button variant="ghost" size="sm" className="text-indigo-600 text-xs font-bold">
+                  <span className="text-indigo-600 text-xs font-bold flex items-center">
                     查看详情 <ChevronRight className="ml-1 h-3 w-3" />
-                  </Button>
+                  </span>
                 </div>
               </CardContent>
             </Card>
