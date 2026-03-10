@@ -11,13 +11,20 @@ import {
   ChevronRight,
   Star,
   CheckCircle2,
-  Clock
+  Clock,
+  LogOut
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { supabase } from '@/integrations/supabase/client';
 
 const Profile = () => {
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
 
   const menuGroups = [
     {
@@ -34,6 +41,11 @@ const Profile = () => {
     {
       items: [
         { id: 'settings', name: '设置', icon: Settings, color: 'text-slate-400' },
+      ]
+    },
+    {
+      items: [
+        { id: 'logout', name: '退出登录', icon: LogOut, color: 'text-red-500', action: handleLogout },
       ]
     }
   ];
@@ -89,7 +101,7 @@ const Profile = () => {
             {group.items.map((item) => (
               <div 
                 key={item.id}
-                onClick={() => item.path && navigate(item.path)}
+                onClick={() => item.path ? navigate(item.path) : (item.action ? item.action() : null)}
                 className="flex items-center px-4 py-3 active:bg-slate-100 transition-colors cursor-pointer"
               >
                 <item.icon className={cn("h-6 w-6", item.color)} />
