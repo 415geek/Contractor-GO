@@ -35,7 +35,7 @@ const chats = [
   },
 ];
 
-const Index = () => {
+const Messages = () => {
   const navigate = useNavigate();
 
   return (
@@ -73,4 +73,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Messages;

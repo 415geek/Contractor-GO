@@ -3,19 +3,19 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
+  LayoutGrid,
   MessageSquare, 
   Briefcase, 
   Compass, 
   User,
   Plus,
-  Search,
-  MoreVertical
+  Search
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { name: '消息', href: '/', icon: MessageSquare },
+  { name: '首页', href: '/', icon: LayoutGrid },
+  { name: '消息', href: '/messages', icon: MessageSquare },
   { name: '项目', href: '/projects', icon: Briefcase },
   { name: '发现', href: '/discover', icon: Compass },
   { name: '我', href: '/profile', icon: User },
@@ -53,7 +53,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode, title?: str
                 isActive ? "text-[#07c160]" : "text-slate-500"
               )}
             >
-              <item.icon className={cn("h-6 w-6", isActive ? "fill-[#07c160]" : "")} />
+              <item.icon className={cn("h-6 w-6", isActive && item.name !== '首页' ? "fill-[#07c160]" : "")} />
               <span className="text-[10px] font-medium">{item.name}</span>
             </Link>
           );
