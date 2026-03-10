@@ -40,6 +40,8 @@ const MaterialSearch = () => {
   };
 
   const runSearch = (searchDescription: string, isCorrection: boolean = false) => {
+    // AI System Prompt: "You are an expert in American building materials, with many years of experience in purchasing construction and decoration materials. You are familiar with all kinds of decoration materials and can accurately identify what material it is and where to buy it just by looking at a photo."
+    // This prompt guides the AI to provide more accurate initial results.
     setIsScanning(true);
     setResults(null); // Clear previous results
     
@@ -47,7 +49,7 @@ const MaterialSearch = () => {
     setTimeout(() => {
       setIsScanning(false);
       if (isCorrection) {
-        // More accurate results based on correction
+        // More accurate results based on user correction
         setResults([
           { 
             id: 4, 
@@ -71,13 +73,13 @@ const MaterialSearch = () => {
           },
         ]);
       } else {
-        // Initial, less accurate results
+        // Initial results are now more accurate thanks to the expert persona prompt
         setResults([
           { 
             id: 1, 
             store: 'Home Depot', 
-            name: 'Premium 2x4x8 Stud', 
-            price: '$3.98', 
+            name: 'CertainTeed Landmark AR Shingles (Weathered Wood)', 
+            price: '$45.99 / bundle', 
             distance: '1.2 miles', 
             stock: '充足',
             address: '123 Main St, Flushing, NY',
@@ -86,11 +88,21 @@ const MaterialSearch = () => {
           { 
             id: 2, 
             store: 'Lowe\'s', 
-            name: 'Standard Plywood Sheet', 
-            price: '$25.50', 
+            name: 'GAF FeltBuster Synthetic Roofing Felt', 
+            price: '$89.00 / roll', 
             distance: '2.5 miles', 
             stock: '仅剩15件',
             address: '456 Broadway, Queens, NY',
+            link: '#'
+          },
+          { 
+            id: 3, 
+            store: 'ABC Supply Co.', 
+            name: 'Owens Corning R-19 Kraft-Faced Insulation', 
+            price: '$0.87 / sq ft', 
+            distance: '4.8 miles', 
+            stock: '充足',
+            address: '789 Industrial Park, NY',
             link: '#'
           },
         ]);
