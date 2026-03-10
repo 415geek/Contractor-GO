@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Camera, MapPin, Upload, ImagePlus, X, Edit, ExternalLink, Star } from 'lucide-react';
+import { ChevronLeft, Camera, MapPin, Upload, ImagePlus, X, Edit, ExternalLink, Star, Sparkles } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,8 @@ const MaterialSearch = () => {
   const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = React.useState(false);
   const [correctionDescription, setCorrectionDescription] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
+  const [identifiedProduct, setIdentifiedProduct] = React.useState<string | null>(null);
+  const [scanStatus, setScanStatus] = React.useState<string>('');
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -41,16 +43,25 @@ const MaterialSearch = () => {
     }
   };
 
-  const runSearch = async (searchText: string) => {
+  const runSearch = async (searchText?: string, useImageRecognition: boolean = true) => {
     setIsScanning(true);
     setResults(null);
     setError(null);
+    setIdentifiedProduct(null);
 
     try {
+      // If no search text and we have an image, let AI identify it
+      if (!searchText && image && useImageRecognition) {
+        setScanStatus('AI 正在识别材料...');
+      } else {
+        setScanStatus('正在搜索最佳价格...');
+      }
+
       const { data, error } = await supabase.functions.invoke('nova-act-search', {
         body: { 
-          searchText: searchText || 'building materials',
-          location: 'San Francisco, California, United States'
+          searchText: searchText || '',
+          location: 'San Francisco, California, United States',
+          imageBase64: (!searchText && useImageRecognition) ? image : null // Send image for AI recognition
         },
       });
 
@@ -67,6 +78,15 @@ const MaterialSearch = () => {
         });
       }
 
+      // Show what AI identified
+      if (data.identifiedProduct) {
+        setIdentifiedProduct(data.identifiedProduct);
+        toast({
+          title: "AI 识别成功",
+          description: `识别为: ${data.identifiedProduct}`,
+        });
+      }
+
       setResults(data.results || []);
     } catch (error: any) {
       console.error('Error invoking Supabase function:', error);
@@ -79,16 +99,19 @@ const MaterialSearch = () => {
       setResults([]);
     } finally {
       setIsScanning(false);
+      setScanStatus('');
     }
   };
 
   const handleInitialScan = () => {
-    runSearch(description);
+    // If user provided description, use it directly; otherwise let AI identify from image
+    runSearch(description || undefined, !description);
   };
 
   const handleCorrectionScan = () => {
     setIsCorrectionDialogOpen(false);
-    runSearch(correctionDescription);
+    // Use the correction description directly, no image recognition
+    runSearch(correctionDescription, false);
   };
 
   const resetSearch = () => {
@@ -97,6 +120,7 @@ const MaterialSearch = () => {
     setDescription('');
     setCorrectionDescription('');
     setError(null);
+    setIdentifiedProduct(null);
   };
 
   return (
@@ -144,7 +168,7 @@ const MaterialSearch = () => {
               <div className="w-48 h-48 border-2 border-indigo-400 rounded-lg relative overflow-hidden">
                 <div className="absolute inset-x-0 h-1 bg-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.8)] animate-scan-move"></div>
               </div>
-              <p className="mt-6 text-indigo-300 font-bold animate-pulse">正在全网搜索真实价格...</p>
+              <p className="mt-6 text-indigo-300 font-bold animate-pulse">{scanStatus || '处理中...'}</p>
             </div>
           )}
         </div>
@@ -158,12 +182,17 @@ const MaterialSearch = () => {
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="添加描述帮助 AI 更精准识别，例如：2x4 木方，8英尺长"
+                placeholder="留空则由 AI 自动识别图片中的材料"
                 className="bg-white rounded-xl"
               />
+              <p className="text-xs text-slate-400 flex items-center">
+                <Sparkles className="h-3 w-3 mr-1 text-indigo-500" />
+                AI 会自动识别品牌、型号和规格
+              </p>
             </div>
             <Button onClick={handleInitialScan} disabled={!image} className="w-full h-12 rounded-xl bg-indigo-600 text-base font-bold">
-              开始识别
+              <Sparkles className="h-4 w-4 mr-2" />
+              AI 识别并比价
             </Button>
           </div>
         )}
@@ -173,14 +202,27 @@ const MaterialSearch = () => {
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
             <p className="font-bold mb-1">搜索出错</p>
             <p>{error}</p>
-            {error.includes('API key') && (
+            {error.includes('OPENAI_API_KEY') && (
               <p className="mt-2 text-xs">
-                请在 Supabase 控制台中添加 SERPAPI_KEY 密钥。
-                <a href="https://serpapi.com" target="_blank" rel="noopener noreferrer" className="underline ml-1">
-                  获取 API Key
-                </a>
+                图片识别需要 OpenAI API Key。请在 Supabase 控制台 Edge Function Secrets 中添加 <code className="bg-red-100 px-1 rounded">OPENAI_API_KEY</code>
               </p>
             )}
+            {error.includes('SERPAPI_KEY') && (
+              <p className="mt-2 text-xs">
+                请在 Supabase 控制台中添加 SERPAPI_KEY 密钥。
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* AI Identified Product */}
+        {identifiedProduct && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+            <div className="flex items-center text-indigo-700 mb-1">
+              <Sparkles className="h-4 w-4 mr-2" />
+              <span className="font-bold text-sm">AI 识别结果</span>
+            </div>
+            <p className="text-indigo-900 font-medium">{identifiedProduct}</p>
           </div>
         )}
 
@@ -188,8 +230,8 @@ const MaterialSearch = () => {
         {results && results.length > 0 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-bold text-slate-900">搜索结果</h2>
-              <span className="text-xs text-slate-400">来自 Google Shopping</span>
+              <h2 className="text-lg font-bold text-slate-900">比价结果</h2>
+              <span className="text-xs text-slate-400">实时价格</span>
             </div>
             
             {results.map((item) => (
@@ -216,7 +258,7 @@ const MaterialSearch = () => {
                       <h3 className="text-xs text-slate-600 mt-1 line-clamp-2">{item.name}</h3>
                       <div className="flex items-center justify-between mt-2">
                         <div className="text-lg font-bold text-indigo-600">{item.price}</div>
-                        <div className={cn("text-[10px] font-medium", item.stock === '充足' ? "text-green-500" : "text-amber-500")}>
+                        <div className={cn("text-[10px] font-medium", item.stock === '有货' ? "text-green-500" : "text-amber-500")}>
                           {item.stock}
                         </div>
                       </div>
@@ -234,7 +276,7 @@ const MaterialSearch = () => {
                         className="h-7 rounded-lg bg-indigo-600 text-[11px]"
                         onClick={() => window.open(item.link, '_blank')}
                       >
-                        <ExternalLink className="h-3 w-3 mr-1" /> 购买
+                        <ExternalLink className="h-3 w-3 mr-1" /> 去购买
                       </Button>
                     )}
                   </div>
@@ -251,7 +293,7 @@ const MaterialSearch = () => {
                 className="flex-1 bg-white border-indigo-100 text-indigo-600"
                 onClick={() => setIsCorrectionDialogOpen(true)}
               >
-                <Edit className="h-3 w-3 mr-2" /> 材料不对？点击修正
+                <Edit className="h-3 w-3 mr-2" /> 识别不对？修正
               </Button>
             </div>
           </div>
@@ -272,21 +314,21 @@ const MaterialSearch = () => {
           <DialogHeader>
             <DialogTitle>修正材料信息</DialogTitle>
             <DialogDescription>
-              请提供更详细的材料描述，帮助 AI 进行更精确的搜索。
+              请提供正确的材料名称，系统将重新搜索。
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label htmlFor="correction-description">详细描述</Label>
+            <Label htmlFor="correction-description">正确的材料名称</Label>
             <Textarea 
               id="correction-description"
               value={correctionDescription}
               onChange={(e) => setCorrectionDescription(e.target.value)}
-              placeholder="例如：美国胡桃木实木地板，3/4英寸厚"
+              placeholder="例如：SAKRETE High-Strength Concrete Mix 80 lb"
               className="mt-2 rounded-xl"
             />
           </div>
           <DialogFooter>
-            <Button onClick={handleCorrectionScan} className="w-full h-12 rounded-xl bg-indigo-600">
+            <Button onClick={handleCorrectionScan} disabled={!correctionDescription} className="w-full h-12 rounded-xl bg-indigo-600">
               重新搜索
             </Button>
           </DialogFooter>
