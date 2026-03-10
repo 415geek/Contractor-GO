@@ -9,12 +9,9 @@ import {
   Bookmark, 
   ChevronRight,
   Star,
-  CheckCircle2,
-  Clock,
   QrCode,
   CreditCard,
   FileText,
-  HelpCircle
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/integrations/supabase/client';
@@ -54,12 +51,23 @@ const Profile = () => {
       {/* Profile Header */}
       <div className="bg-white px-4 pt-12 pb-5">
         <div className="flex items-center">
-          <div className="h-[64px] w-[64px] rounded-lg bg-gradient-to-br from-[#07C160] to-[#06AE56] flex items-center justify-center text-white text-[24px] font-medium">
-            老
+          {/* Builder+ styled avatar */}
+          <div className="h-[64px] w-[64px] rounded-xl bg-[#07C160] flex items-center justify-center overflow-hidden">
+            <svg 
+              viewBox="0 0 100 80" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-10 h-10"
+            >
+              <rect x="5" y="25" width="25" height="35" rx="5" stroke="white" strokeWidth="4" fill="none"/>
+              <rect x="10" y="30" width="15" height="25" rx="3" stroke="white" strokeWidth="2" fill="none"/>
+              <rect x="30" y="35" width="60" height="12" fill="white"/>
+              <path d="M90 47 L85 60 L80 47 L75 60 L70 47 L65 60 L60 47 L55 60 L50 47 L45 60 L40 47 L35 60 L30 47" fill="white"/>
+            </svg>
           </div>
           <div className="ml-4 flex-1">
             <h2 className="text-[18px] font-medium text-[#191919]">老王</h2>
-            <p className="text-[14px] text-[#B2B2B2] mt-0.5">微信号: Pro_Wang_NY</p>
+            <p className="text-[14px] text-[#B2B2B2] mt-0.5">Builder+ ID: Pro_Wang_NY</p>
           </div>
           <div className="flex items-center space-x-4">
             <QrCode className="h-5 w-5 text-[#B2B2B2]" />

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
+import Logo from '@/components/Logo';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -51,11 +52,7 @@ const Login = () => {
     <div className="min-h-screen bg-white flex flex-col max-w-md mx-auto">
       {/* Logo */}
       <div className="pt-20 pb-10 text-center">
-        <div className="h-20 w-20 bg-[#07C160] rounded-2xl flex items-center justify-center mx-auto">
-          <span className="text-white text-[32px] font-bold">C</span>
-        </div>
-        <h1 className="text-[24px] font-medium text-[#191919] mt-6">ContractorPro</h1>
-        <p className="text-[14px] text-[#B2B2B2] mt-2">装修承包商的智能助手</p>
+        <Logo size="xl" />
       </div>
 
       {/* Form */}

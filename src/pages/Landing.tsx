@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import Logo from '@/components/Logo';
 
 const features = [
   {
@@ -42,11 +43,8 @@ const Landing = () => {
     <div className="min-h-screen bg-white flex flex-col max-w-md mx-auto">
       {/* Hero */}
       <div className="pt-16 pb-12 px-6 text-center">
-        <div className="h-20 w-20 bg-[#07C160] rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-[#07C160]/30">
-          <span className="text-white text-[32px] font-bold">C</span>
-        </div>
-        <h1 className="text-[28px] font-bold text-[#191919] mt-6">ContractorPro</h1>
-        <p className="text-[16px] text-[#888888] mt-3 leading-relaxed">
+        <Logo size="xl" />
+        <p className="text-[16px] text-[#888888] mt-4 leading-relaxed">
           专为美国华人装修承包商打造<br/>AI 驱动的一站式管理工具
         </p>
       </div>
@@ -72,7 +70,7 @@ const Landing = () => {
       {/* Benefits */}
       <div className="px-6 mt-8">
         <div className="bg-[#E8F8EE] rounded-xl p-4">
-          <h3 className="text-[14px] font-medium text-[#07C160] mb-3">为什么选择我们</h3>
+          <h3 className="text-[14px] font-medium text-[#07C160] mb-3">为什么选择 Builder+</h3>
           <div className="space-y-2">
             {[
               '节省 50% 材料采购时间',
@@ -106,7 +104,7 @@ const Landing = () => {
 
       {/* Footer */}
       <div className="text-center pb-6">
-        <p className="text-[12px] text-[#B2B2B2]">© 2024 ContractorPro</p>
+        <p className="text-[12px] text-[#B2B2B2]">© 2024 Builder+ Project Management</p>
       </div>
     </div>
   );
