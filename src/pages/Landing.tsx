@@ -241,37 +241,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Testimonial Section */}
-      <section className="py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-12">
-            用户怎么说
-          </h2>
-          <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
-            <CardContent className="p-8 md:p-12">
-              <div className="flex justify-center mb-6">
-                {[1,2,3,4,5].map(i => (
-                  <Star key={i} className="h-6 w-6 text-amber-400 fill-current" />
-                ))}
-              </div>
-              <blockquote className="text-xl md:text-2xl text-slate-700 leading-relaxed mb-8">
-                "以前买材料要跑好几家店比价，现在拍个照就知道哪里最便宜。
-                跟老外客户沟通也不用担心了，AI 翻译比我自己说的还专业！"
-              </blockquote>
-              <div className="flex items-center justify-center">
-                <div className="h-12 w-12 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-600 mr-4">
-                  王
-                </div>
-                <div className="text-left">
-                  <div className="font-bold text-slate-900">老王</div>
-                  <div className="text-sm text-slate-500">纽约专业装修 · 12年从业经验</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-24 px-4 bg-indigo-600">
         <div className="max-w-4xl mx-auto text-center text-white">
