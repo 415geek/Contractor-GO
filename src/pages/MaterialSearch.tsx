@@ -2,12 +2,21 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Camera, Search, MapPin, ExternalLink, Phone, Upload, ImagePlus, X } from 'lucide-react';
+import { ChevronLeft, Camera, Search, MapPin, ExternalLink, Phone, Upload, ImagePlus, X, Edit } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 const MaterialSearch = () => {
@@ -16,6 +25,8 @@ const MaterialSearch = () => {
   const [results, setResults] = React.useState<any[] | null>(null);
   const [image, setImage] = React.useState<string | null>(null);
   const [description, setDescription] = React.useState('');
+  const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = React.useState(false);
+  const [correctionDescription, setCorrectionDescription] = React.useState('');
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -28,50 +39,79 @@ const MaterialSearch = () => {
     }
   };
 
-  const handleScan = () => {
+  const runSearch = (searchDescription: string, isCorrection: boolean = false) => {
     setIsScanning(true);
+    setResults(null); // Clear previous results
+    
     // Simulate Nova Act AI 搜索过程
     setTimeout(() => {
       setIsScanning(false);
-      setResults([
-        { 
-          id: 1, 
-          store: 'Home Depot', 
-          name: 'Premium 2x4x8 Stud', 
-          price: '$3.98', 
-          distance: '1.2 miles', 
-          stock: '充足',
-          address: '123 Main St, Flushing, NY',
-          link: '#'
-        },
-        { 
-          id: 2, 
-          store: 'Lowe\'s', 
-          name: 'Standard 2x4x8 Stud', 
-          price: '$4.15', 
-          distance: '2.5 miles', 
-          stock: '仅剩15件',
-          address: '456 Broadway, Queens, NY',
-          link: '#'
-        },
-        { 
-          id: 3, 
-          store: 'Local Lumber Yard', 
-          name: 'Douglas Fir 2x4', 
-          price: '$3.75', 
-          distance: '0.8 miles', 
-          stock: '需预订',
-          address: '789 Industrial Way, NY',
-          link: '#'
-        },
-      ]);
+      if (isCorrection) {
+        // More accurate results based on correction
+        setResults([
+          { 
+            id: 4, 
+            store: 'Lumber Liquidators', 
+            name: 'American Walnut Hardwood Flooring', 
+            price: '$8.99 / sq ft', 
+            distance: '3.1 miles', 
+            stock: '充足',
+            address: '101 Flooring Ave, NY',
+            link: '#'
+          },
+          { 
+            id: 5, 
+            store: 'Home Depot', 
+            name: 'Engineered Walnut Wood Flooring', 
+            price: '$7.50 / sq ft', 
+            distance: '1.2 miles', 
+            stock: '充足',
+            address: '123 Main St, Flushing, NY',
+            link: '#'
+          },
+        ]);
+      } else {
+        // Initial, less accurate results
+        setResults([
+          { 
+            id: 1, 
+            store: 'Home Depot', 
+            name: 'Premium 2x4x8 Stud', 
+            price: '$3.98', 
+            distance: '1.2 miles', 
+            stock: '充足',
+            address: '123 Main St, Flushing, NY',
+            link: '#'
+          },
+          { 
+            id: 2, 
+            store: 'Lowe\'s', 
+            name: 'Standard Plywood Sheet', 
+            price: '$25.50', 
+            distance: '2.5 miles', 
+            stock: '仅剩15件',
+            address: '456 Broadway, Queens, NY',
+            link: '#'
+          },
+        ]);
+      }
     }, 2000);
+  };
+
+  const handleInitialScan = () => {
+    runSearch(description);
+  };
+
+  const handleCorrectionScan = () => {
+    setIsCorrectionDialogOpen(false);
+    runSearch(correctionDescription, true);
   };
 
   const resetSearch = () => {
     setResults(null);
     setImage(null);
     setDescription('');
+    setCorrectionDescription('');
   };
 
   return (
@@ -137,7 +177,7 @@ const MaterialSearch = () => {
                 className="bg-white rounded-xl"
               />
             </div>
-            <Button onClick={handleScan} disabled={!image} className="w-full h-12 rounded-xl bg-indigo-600 text-base font-bold">
+            <Button onClick={handleInitialScan} disabled={!image} className="w-full h-12 rounded-xl bg-indigo-600 text-base font-bold">
               开始识别
             </Button>
           </div>
@@ -147,8 +187,7 @@ const MaterialSearch = () => {
         {results && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-bold text-slate-900">搜索结果 (基于当前位置)</h2>
-              <Badge className="bg-indigo-100 text-indigo-700 border-none">最低价: $3.75</Badge>
+              <h2 className="text-lg font-bold text-slate-900">搜索结果</h2>
             </div>
             
             {results.map((item) => (
@@ -169,35 +208,58 @@ const MaterialSearch = () => {
                       </div>
                     </div>
                   </div>
-                  
                   <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
                     <div className="flex items-center text-[11px] text-slate-400">
                       <MapPin className="h-3 w-3 mr-1" />
                       <span className="truncate max-w-[150px]">{item.address}</span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="h-8 rounded-lg border-slate-200">
-                        <Phone className="h-3 w-3 mr-1" /> 拨打
-                      </Button>
-                      <Button size="sm" className="h-8 rounded-lg bg-indigo-600">
-                        <ExternalLink className="h-3 w-3 mr-1" /> 导航
-                      </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
             
-            <Button 
-              variant="ghost" 
-              className="w-full text-slate-400 text-xs"
-              onClick={resetSearch}
-            >
-              重新拍摄或上传
-            </Button>
+            <div className="flex gap-3 pt-2">
+              <Button variant="ghost" className="flex-1 text-slate-500" onClick={resetSearch}>
+                重新搜索
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1 bg-white border-indigo-100 text-indigo-600"
+                onClick={() => setIsCorrectionDialogOpen(true)}
+              >
+                <Edit className="h-3 w-3 mr-2" /> 材料不对？点击修正
+              </Button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Correction Dialog */}
+      <Dialog open={isCorrectionDialogOpen} onOpenChange={setIsCorrectionDialogOpen}>
+        <DialogContent className="max-w-[90%] rounded-3xl">
+          <DialogHeader>
+            <DialogTitle>修正材料信息</DialogTitle>
+            <DialogDescription>
+              请提供更详细的材料描述，帮助 AI 进行更精确的搜索。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="correction-description">详细描述</Label>
+            <Textarea 
+              id="correction-description"
+              value={correctionDescription}
+              onChange={(e) => setCorrectionDescription(e.target.value)}
+              placeholder="例如：美国胡桃木实木地板，3/4英寸厚"
+              className="mt-2 rounded-xl"
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCorrectionScan} className="w-full h-12 rounded-xl bg-indigo-600">
+              重新搜索
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <style>{`
         @keyframes scan-move {
