@@ -18,6 +18,8 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { supabase } from '@/integrations/supabase/client';
+import { showError } from '@/utils/toast';
 
 const MaterialSearch = () => {
   const navigate = useNavigate();
@@ -39,108 +41,27 @@ const MaterialSearch = () => {
     }
   };
 
-  const runSearch = (searchText: string) => {
-    // AI System Prompt: "You are an expert in American building materials, with many years of experience in purchasing construction and decoration materials. You are familiar with all kinds of decoration materials and can accurately identify what material it is and where to buy it just by looking at a photo."
+  const runSearch = async (searchText: string) => {
     setIsScanning(true);
     setResults(null);
-    
-    setTimeout(() => {
-      setIsScanning(false);
-      const lowerSearchText = searchText.toLowerCase();
 
-      // Simulate AI analysis based on text description
-      if (lowerSearchText.includes('wood') || lowerSearchText.includes('2x4') || lowerSearchText.includes('lumber') || lowerSearchText.includes('木')) {
-        setResults([
-          { 
-            id: 1, 
-            store: 'Home Depot', 
-            name: '2 in. x 4 in. x 8 ft. #2 Prime Douglas Fir Stud', 
-            price: '$4.52 / each', 
-            distance: '1.5 miles', 
-            stock: '充足',
-            address: '200 Bayshore Blvd, San Francisco, CA',
-            link: '#'
-          },
-          { 
-            id: 2, 
-            store: 'Lowe\'s', 
-            name: '2-in x 4-in x 8-ft Whitewood Stud', 
-            price: '$4.65 / each', 
-            distance: '3.2 miles', 
-            stock: '充足',
-            address: '520 High St, Oakland, CA',
-            link: '#'
-          },
-          { 
-            id: 3, 
-            store: 'Golden State Lumber', 
-            name: '2x4-8\' SPF Stud', 
-            price: '$4.95 / each', 
-            distance: '5.1 miles', 
-            stock: '充足',
-            address: '401 Du Bois St, San Rafael, CA',
-            link: '#'
-          },
-        ]);
-      } else if (lowerSearchText.includes('walnut') || lowerSearchText.includes('flooring')) {
-        setResults([
-          { 
-            id: 4, 
-            store: 'Lumber Liquidators', 
-            name: 'American Walnut Hardwood Flooring', 
-            price: '$9.99 / sq ft', 
-            distance: '4.5 miles', 
-            stock: '充足',
-            address: '101 Flooring Ave, Palo Alto, CA',
-            link: '#'
-          },
-          { 
-            id: 5, 
-            store: 'Home Depot', 
-            name: 'Engineered Walnut Wood Flooring', 
-            price: '$8.25 / sq ft', 
-            distance: '1.5 miles', 
-            stock: '充足',
-            address: '200 Bayshore Blvd, San Francisco, CA',
-            link: '#'
-          },
-        ]);
-      } else {
-        // Default to Sakrete Concrete Mix if no specific keywords match
-        setResults([
-          { 
-            id: 1, 
-            store: 'Home Depot', 
-            name: 'Sakrete 80 lb. High-Strength Concrete Mix', 
-            price: '$7.25 / bag', 
-            distance: '1.5 miles', 
-            stock: '充足',
-            address: '200 Bayshore Blvd, San Francisco, CA',
-            link: '#'
-          },
-          { 
-            id: 2, 
-            store: 'Lowe\'s', 
-            name: 'Sakrete 80-lb High Strength Concrete Mix', 
-            price: '$7.25 / bag', 
-            distance: '3.2 miles', 
-            stock: '充足',
-            address: '520 High St, Oakland, CA',
-            link: '#'
-          },
-          { 
-            id: 3, 
-            store: 'Central Concrete Supply', 
-            name: 'Sakrete Concrete Mix 80lb', 
-            price: '$7.80 / bag', 
-            distance: '6.8 miles', 
-            stock: '少量',
-            address: '999 Construction Rd, San Jose, CA',
-            link: '#'
-          },
-        ]);
+    try {
+      const { data, error } = await supabase.functions.invoke('nova-act-search', {
+        body: { searchText: searchText || 'default' },
+      });
+
+      if (error) {
+        throw error;
       }
-    }, 2000);
+
+      setResults(data.results);
+    } catch (error: any) {
+      console.error('Error invoking Supabase function:', error);
+      showError(`Error: ${error.message}`);
+      setResults([]);
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   const handleInitialScan = () => {
