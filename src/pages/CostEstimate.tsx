@@ -2,59 +2,152 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Camera, Info, Calculator, Search, CheckCircle2 } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  Camera, 
+  Upload, 
+  Info, 
+  Calculator, 
+  CheckCircle2, 
+  Sparkles,
+  ExternalLink,
+  RefreshCw,
+  ImagePlus,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Home,
+  Layers
+} from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from "@/hooks/use-toast";
 
-const houseModules = [
-  { id: 'roof', name: '屋顶 (Roof)', top: '15%', left: '30%', width: '40%', height: '20%' },
-  { id: 'wall', name: '外墙 (Exterior Wall)', top: '35%', left: '25%', width: '50%', height: '40%' },
-  { id: 'window', name: '窗户 (Windows)', top: '45%', left: '35%', width: '10%', height: '15%' },
-  { id: 'door', name: '大门 (Main Door)', top: '60%', left: '55%', width: '10%', height: '20%' },
-];
+interface ModuleEstimate {
+  id: string;
+  name: string;
+  nameEn: string;
+  area: string;
+  materialPriceRange: string;
+  laborPriceRange: string;
+  totalRange: string;
+  confidence: number;
+  details: string;
+}
+
+interface HouseAnalysis {
+  houseType: string;
+  houseTypeEn: string;
+  estimatedTotalArea: string;
+  overallCondition: string;
+  modules: ModuleEstimate[];
+  totalEstimate: string;
+  recommendations: string[];
+}
 
 const CostEstimate = () => {
   const navigate = useNavigate();
-  const [step, setStep] = React.useState<'capture' | 'segment' | 'result'>('capture');
-  const [selectedModule, setSelectedModule] = React.useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [estimateType, setEstimateType] = React.useState<'manual' | 'ai'>('ai');
-  const [area, setArea] = React.useState('');
-  const [finalEstimate, setFinalEstimate] = React.useState<any>(null);
+  const { toast } = useToast();
+  const [step, setStep] = React.useState<'capture' | 'analyzing' | 'result'>('capture');
+  const [image, setImage] = React.useState<string | null>(null);
+  const [analysis, setAnalysis] = React.useState<HouseAnalysis | null>(null);
+  const [materialSuggestions, setMaterialSuggestions] = React.useState<any[]>([]);
+  const [error, setError] = React.useState<string | null>(null);
+  const [expandedModule, setExpandedModule] = React.useState<string | null>(null);
+  const [analyzeStatus, setAnalyzeStatus] = React.useState<string>('');
 
-  const handleCapture = () => {
-    setStep('segment');
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleModuleClick = (mod: any) => {
-    setSelectedModule(mod);
-    setIsDialogOpen(true);
+  const runAnalysis = async (selectedModule?: string) => {
+    if (!image) return;
+    
+    setStep('analyzing');
+    setError(null);
+    setAnalyzeStatus('AI 正在分析房屋结构...');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('house-cost-estimate', {
+        body: { 
+          imageBase64: image,
+          selectedModule,
+          location: 'United States'
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        setError(data.error);
+        toast({
+          title: "分析出错",
+          description: data.error,
+          variant: "destructive",
+        });
+        setStep('capture');
+        return;
+      }
+
+      setAnalysis(data.analysis);
+      setMaterialSuggestions(data.materialSuggestions || []);
+      setStep('result');
+      
+      toast({
+        title: "分析完成",
+        description: `已识别 ${data.analysis.modules.length} 个建筑模块`,
+      });
+
+    } catch (error: any) {
+      console.error('Error analyzing house:', error);
+      setError(error.message);
+      toast({
+        title: "分析失败",
+        description: error.message,
+        variant: "destructive",
+      });
+      setStep('capture');
+    }
   };
 
-  const runEstimate = () => {
-    setIsDialogOpen(false);
-    setStep('result');
-    // Simulate AI calculation based on Nova Act search
-    setFinalEstimate({
-      module: selectedModule.name,
-      area: estimateType === 'ai' ? '约 1,200 sq ft' : `${area} sq ft`,
-      materialPrice: '$4.50 - $6.20 / sq ft',
-      laborPrice: '$3.00 - $4.50 / sq ft',
-      totalRange: '$9,000 - $12,800',
-      stores: ['Home Depot', 'Lowe\'s', 'ABC Supply Co.']
-    });
+  const resetAnalysis = () => {
+    setStep('capture');
+    setImage(null);
+    setAnalysis(null);
+    setMaterialSuggestions([]);
+    setError(null);
+    setExpandedModule(null);
+  };
+
+  const getModuleIcon = (moduleId: string) => {
+    const icons: Record<string, string> = {
+      'roof': '🏠',
+      'wall': '🧱',
+      'window': '🪟',
+      'door': '🚪',
+      'foundation': '🏗️',
+      'deck': '🪵',
+      'driveway': '🛣️',
+      'garage': '🚗',
+      'fence': '🏡',
+    };
+    return icons[moduleId.toLowerCase()] || '📦';
   };
 
   return (
@@ -67,109 +160,282 @@ const CostEstimate = () => {
         <h1 className="flex-1 text-center text-[17px] font-semibold text-slate-900 mr-8">房屋造价估算</h1>
       </header>
 
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 pb-8">
+        {/* Capture Step */}
         {step === 'capture' && (
-          <div className="h-full flex flex-col items-center justify-center space-y-6">
-            <div className="w-full aspect-[3/4] bg-slate-200 rounded-3xl border-4 border-dashed border-slate-300 flex flex-col items-center justify-center p-8 text-center">
-              <div className="h-20 w-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                <Camera className="h-10 w-10 text-indigo-600" />
-              </div>
-              <h2 className="text-lg font-bold text-slate-900">拍摄房屋全景</h2>
-              <p className="text-sm text-slate-500 mt-2">
-                请确保照片包含完整的房屋外观，AI 将自动识别建筑模块。
-              </p>
-            </div>
-            <Button onClick={handleCapture} className="w-full h-14 rounded-2xl bg-indigo-600 text-lg font-bold">
-              立即拍摄
-            </Button>
-          </div>
-        )}
-
-        {step === 'segment' && (
-          <div className="space-y-6">
-            <div className="relative aspect-[3/4] rounded-3xl overflow-hidden shadow-xl border-4 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&q=80&w=600" 
-                alt="House" 
-                className="w-full h-full object-cover"
-              />
-              {/* AI Segmentation Overlays */}
-              <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
-              {houseModules.map((mod) => (
-                <button
-                  key={mod.id}
-                  onClick={() => handleModuleClick(mod)}
-                  className={cn(
-                    "absolute border-2 border-white/50 rounded-lg transition-all duration-300 flex items-center justify-center group",
-                    "bg-indigo-500/30 hover:bg-indigo-500/60 hover:border-white hover:scale-105"
-                  )}
-                  style={{ top: mod.top, left: mod.left, width: mod.width, height: mod.height }}
-                >
-                  <div className="bg-white/90 px-2 py-1 rounded text-[10px] font-bold text-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {mod.name}
+          <div className="space-y-6 animate-in fade-in">
+            {/* Image Upload Area */}
+            <div className="relative aspect-[4/3] bg-slate-100 rounded-3xl overflow-hidden flex items-center justify-center border-2 border-dashed border-slate-200">
+              {!image ? (
+                <div className="text-center text-slate-500 space-y-4 p-6">
+                  <div className="h-16 w-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mx-auto">
+                    <Home className="h-8 w-8 text-indigo-600" />
                   </div>
-                </button>
-              ))}
-              
-              <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md p-3 rounded-xl border border-white/20">
-                <p className="text-white text-xs flex items-center">
-                  <Info className="h-3 w-3 mr-2 text-indigo-300" />
-                  AI 已识别 4 个模块。点击指定区域进行估价。
-                </p>
-              </div>
+                  <div>
+                    <p className="text-base font-medium text-slate-700">拍摄房屋全景照片</p>
+                    <p className="text-sm text-slate-400 mt-1">AI 将自动识别建筑模块并估算造价</p>
+                  </div>
+                  <div className="flex justify-center gap-3 pt-2">
+                    <Button variant="outline" className="bg-white rounded-xl">
+                      <Camera className="h-4 w-4 mr-2" /> 拍照
+                    </Button>
+                    <Button asChild variant="outline" className="bg-white rounded-xl">
+                      <label htmlFor="house-upload" className="cursor-pointer flex items-center">
+                        <Upload className="h-4 w-4 mr-2" /> 上传
+                        <input 
+                          id="house-upload" 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={handleImageUpload} 
+                        />
+                      </label>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <img src={image} alt="House Preview" className="w-full h-full object-cover" />
+                  <Button 
+                    variant="destructive" 
+                    size="icon" 
+                    className="absolute top-3 right-3 h-8 w-8 rounded-full shadow-lg" 
+                    onClick={() => setImage(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
-            <p className="text-center text-slate-400 text-xs">提示：点击蓝色高亮区域开始估算</p>
-          </div>
-        )}
 
-        {step === 'result' && finalEstimate && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
-              <div className="absolute -right-4 -top-4 h-24 w-24 bg-white/10 rounded-full blur-2xl"></div>
-              <h2 className="text-sm font-medium opacity-80 uppercase tracking-wider">预估总价范围</h2>
-              <div className="text-4xl font-black mt-1">{finalEstimate.totalRange}</div>
-              <div className="mt-4 flex items-center text-xs bg-white/20 w-fit px-3 py-1 rounded-full">
-                <CheckCircle2 className="h-3 w-3 mr-1" />
-                基于 Nova Act AI 实时市场价
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+                <p className="font-bold mb-1">分析出错</p>
+                <p>{error}</p>
               </div>
-            </div>
+            )}
 
-            <Card className="border-none shadow-sm rounded-2xl">
-              <CardContent className="p-5 space-y-4">
-                <div className="flex justify-between items-center pb-4 border-b border-slate-50">
-                  <span className="text-slate-500 text-sm">估算模块</span>
-                  <span className="font-bold text-slate-900">{finalEstimate.module}</span>
-                </div>
-                <div className="flex justify-between items-center pb-4 border-b border-slate-50">
-                  <span className="text-slate-500 text-sm">预估面积</span>
-                  <span className="font-bold text-slate-900">{finalEstimate.area}</span>
-                </div>
-                <div className="flex justify-between items-center pb-4 border-b border-slate-50">
-                  <span className="text-slate-500 text-sm">材料单价</span>
-                  <span className="font-bold text-indigo-600">{finalEstimate.materialPrice}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 text-sm">人工单价 (建议)</span>
-                  <span className="font-bold text-slate-900">{finalEstimate.laborPrice}</span>
+            {/* Info Card */}
+            <Card className="border-none shadow-sm rounded-2xl bg-indigo-50">
+              <CardContent className="p-4">
+                <div className="flex items-start">
+                  <Info className="h-5 w-5 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-indigo-700">
+                    <p className="font-medium mb-1">AI 智能估价</p>
+                    <p className="text-indigo-600/80">
+                      基于 GPT-4 Vision 技术，自动识别屋顶、外墙、窗户、门等模块，
+                      结合美国当前市场价格提供专业估价。
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-900 px-1">推荐采购渠道</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {finalEstimate.stores.map((store: string) => (
-                  <div key={store} className="bg-white p-3 rounded-xl text-center shadow-sm border border-slate-100">
-                    <div className="text-[10px] font-bold text-slate-800 truncate">{store}</div>
-                    <div className="text-[8px] text-indigo-500 mt-1">有现货</div>
-                  </div>
-                ))}
+            {/* Analyze Button */}
+            <Button 
+              onClick={() => runAnalysis()} 
+              disabled={!image} 
+              className="w-full h-14 rounded-2xl bg-indigo-600 text-lg font-bold shadow-lg shadow-indigo-200"
+            >
+              <Sparkles className="h-5 w-5 mr-2" />
+              开始 AI 分析
+            </Button>
+          </div>
+        )}
+
+        {/* Analyzing Step */}
+        {step === 'analyzing' && (
+          <div className="h-full flex flex-col items-center justify-center space-y-6 py-20">
+            <div className="relative">
+              <div className="h-24 w-24 bg-indigo-100 rounded-3xl flex items-center justify-center">
+                <Home className="h-12 w-12 text-indigo-600" />
+              </div>
+              <div className="absolute -bottom-2 -right-2 h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center animate-pulse">
+                <Sparkles className="h-5 w-5 text-white" />
               </div>
             </div>
+            <div className="text-center space-y-2">
+              <div className="h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-lg font-bold text-slate-900">{analyzeStatus}</p>
+              <p className="text-sm text-slate-500">正在识别建筑模块并计算造价...</p>
+            </div>
+          </div>
+        )}
 
+        {/* Result Step */}
+        {step === 'result' && analysis && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Total Estimate Card */}
+            <Card className="border-none shadow-lg rounded-3xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white overflow-hidden">
+              <CardContent className="p-6 relative">
+                <div className="absolute -right-8 -top-8 h-32 w-32 bg-white/10 rounded-full blur-2xl"></div>
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-indigo-200 text-sm">预估总造价</p>
+                      <p className="text-3xl font-black mt-1">{analysis.totalEstimate}</p>
+                    </div>
+                    <div className="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                      <Calculator className="h-7 w-7" />
+                    </div>
+                  </div>
+                  <div className="flex items-center text-xs bg-white/20 w-fit px-3 py-1.5 rounded-full">
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                    基于 AI 视觉分析 + 实时市场价格
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* House Info */}
+            <Card className="border-none shadow-sm rounded-2xl">
+              <CardContent className="p-5">
+                <div className="flex items-center mb-4">
+                  <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center mr-3">
+                    <Home className="h-5 w-5 text-slate-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900">{analysis.houseType}</h3>
+                    <p className="text-xs text-slate-500">{analysis.houseTypeEn}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-slate-500">预估面积</p>
+                    <p className="font-bold text-slate-900">{analysis.estimatedTotalArea}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">整体状况</p>
+                    <p className="font-bold text-slate-900">{analysis.overallCondition}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Modules List */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="font-bold text-slate-900 flex items-center">
+                  <Layers className="h-4 w-4 mr-2 text-indigo-600" />
+                  建筑模块分析
+                </h3>
+                <Badge variant="secondary" className="bg-slate-100">
+                  {analysis.modules.length} 个模块
+                </Badge>
+              </div>
+
+              {analysis.modules.map((module) => (
+                <Collapsible 
+                  key={module.id}
+                  open={expandedModule === module.id}
+                  onOpenChange={(open) => setExpandedModule(open ? module.id : null)}
+                >
+                  <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
+                    <CollapsibleTrigger asChild>
+                      <CardContent className="p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="text-2xl mr-3">{getModuleIcon(module.id)}</span>
+                            <div>
+                              <h4 className="font-bold text-slate-900">{module.name}</h4>
+                              <p className="text-xs text-slate-500">{module.nameEn} · {module.area}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            <div className="text-right mr-3">
+                              <p className="font-bold text-indigo-600">{module.totalRange}</p>
+                              <div className="flex items-center justify-end">
+                                <Progress value={module.confidence * 100} className="w-12 h-1.5" />
+                                <span className="text-[10px] text-slate-400 ml-1">{Math.round(module.confidence * 100)}%</span>
+                              </div>
+                            </div>
+                            {expandedModule === module.id ? (
+                              <ChevronUp className="h-5 w-5 text-slate-400" />
+                            ) : (
+                              <ChevronDown className="h-5 w-5 text-slate-400" />
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="px-4 pb-4 pt-0 border-t border-slate-50">
+                        <div className="grid grid-cols-2 gap-3 py-3 text-sm">
+                          <div className="bg-slate-50 rounded-xl p-3">
+                            <p className="text-slate-500 text-xs">材料单价</p>
+                            <p className="font-bold text-slate-900">{module.materialPriceRange}</p>
+                          </div>
+                          <div className="bg-slate-50 rounded-xl p-3">
+                            <p className="text-slate-500 text-xs">人工单价</p>
+                            <p className="font-bold text-slate-900">{module.laborPriceRange}</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-600 leading-relaxed">{module.details}</p>
+                      </div>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+              ))}
+            </div>
+
+            {/* Recommendations */}
+            {analysis.recommendations && analysis.recommendations.length > 0 && (
+              <Card className="border-none shadow-sm rounded-2xl bg-amber-50">
+                <CardContent className="p-4">
+                  <h4 className="font-bold text-amber-800 mb-3 flex items-center">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    AI 建议
+                  </h4>
+                  <ul className="space-y-2">
+                    {analysis.recommendations.map((rec, idx) => (
+                      <li key={idx} className="flex items-start text-sm text-amber-700">
+                        <CheckCircle2 className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                        {rec}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Material Suggestions */}
+            {materialSuggestions.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-bold text-slate-900 px-1">推荐材料</h3>
+                {materialSuggestions.map((item, idx) => (
+                  <Card 
+                    key={idx} 
+                    className="border-none shadow-sm rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => item.link && window.open(item.link, '_blank')}
+                  >
+                    <CardContent className="p-3 flex items-center">
+                      {item.thumbnail && (
+                        <img src={item.thumbnail} alt={item.name} className="h-14 w-14 rounded-lg object-cover mr-3" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 line-clamp-1">{item.name}</p>
+                        <p className="text-xs text-slate-500">{item.store}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-indigo-600">{item.price}</p>
+                        <ExternalLink className="h-3 w-3 text-slate-400 ml-auto" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
-              <Button variant="outline" className="flex-1 h-12 rounded-xl border-slate-200" onClick={() => setStep('segment')}>
-                重新选择
+              <Button 
+                variant="outline" 
+                className="flex-1 h-12 rounded-xl border-slate-200" 
+                onClick={resetAnalysis}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                重新分析
               </Button>
               <Button className="flex-1 h-12 rounded-xl bg-indigo-600">
                 保存到项目
@@ -178,62 +444,6 @@ const CostEstimate = () => {
           </div>
         )}
       </div>
-
-      {/* Estimate Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[90%] rounded-3xl">
-          <DialogHeader>
-            <DialogTitle>估算 {selectedModule?.name}</DialogTitle>
-            <DialogDescription>
-              请选择估算方式，AI 将结合当前地理位置的材料价格进行计算。
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-2 gap-3 py-4">
-            <button 
-              onClick={() => setEstimateType('ai')}
-              className={cn(
-                "p-4 rounded-2xl border-2 text-left transition-all",
-                estimateType === 'ai' ? "border-indigo-600 bg-indigo-50" : "border-slate-100 bg-slate-50"
-              )}
-            >
-              <Calculator className={cn("h-6 w-6 mb-2", estimateType === 'ai' ? "text-indigo-600" : "text-slate-400")} />
-              <div className="font-bold text-sm">AI 自动估算</div>
-              <div className="text-[10px] text-slate-500 mt-1">基于照片透视识别面积</div>
-            </button>
-            <button 
-              onClick={() => setEstimateType('manual')}
-              className={cn(
-                "p-4 rounded-2xl border-2 text-left transition-all",
-                estimateType === 'manual' ? "border-indigo-600 bg-indigo-50" : "border-slate-100 bg-slate-50"
-              )}
-            >
-              <Search className={cn("h-6 w-6 mb-2", estimateType === 'manual' ? "text-indigo-600" : "text-slate-400")} />
-              <div className="font-bold text-sm">手动输入</div>
-              <div className="text-[10px] text-slate-500 mt-1">输入精确的施工面积</div>
-            </button>
-          </div>
-
-          {estimateType === 'manual' && (
-            <div className="space-y-2">
-              <Label htmlFor="area">施工面积 (sq ft)</Label>
-              <Input 
-                id="area" 
-                placeholder="例如: 1500" 
-                value={area} 
-                onChange={(e) => setArea(e.target.value)}
-                className="rounded-xl"
-              />
-            </div>
-          )}
-
-          <DialogFooter className="mt-4">
-            <Button onClick={runEstimate} className="w-full h-12 rounded-xl bg-indigo-600">
-              开始计算
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
