@@ -39,16 +39,50 @@ const MaterialSearch = () => {
     }
   };
 
-  const runSearch = (searchDescription: string, isCorrection: boolean = false) => {
+  const runSearch = (searchText: string) => {
     // AI System Prompt: "You are an expert in American building materials, with many years of experience in purchasing construction and decoration materials. You are familiar with all kinds of decoration materials and can accurately identify what material it is and where to buy it just by looking at a photo."
     setIsScanning(true);
-    setResults(null); // Clear previous results
+    setResults(null);
     
-    // Simulate Nova Act AI 搜索过程
     setTimeout(() => {
       setIsScanning(false);
-      if (isCorrection) {
-        // More accurate results based on user correction for a different product
+      const lowerSearchText = searchText.toLowerCase();
+
+      // Simulate AI analysis based on text description
+      if (lowerSearchText.includes('wood') || lowerSearchText.includes('2x4') || lowerSearchText.includes('lumber') || lowerSearchText.includes('木')) {
+        setResults([
+          { 
+            id: 1, 
+            store: 'Home Depot', 
+            name: '2 in. x 4 in. x 8 ft. #2 Prime Douglas Fir Stud', 
+            price: '$3.58 / each', 
+            distance: '1.2 miles', 
+            stock: '充足',
+            address: '123 Main St, Flushing, NY',
+            link: '#'
+          },
+          { 
+            id: 2, 
+            store: 'Lowe\'s', 
+            name: '2-in x 4-in x 8-ft Whitewood Stud', 
+            price: '$3.60 / each', 
+            distance: '2.5 miles', 
+            stock: '充足',
+            address: '456 Broadway, Queens, NY',
+            link: '#'
+          },
+          { 
+            id: 3, 
+            store: 'Queens Lumber', 
+            name: '2x4-8\' SPF Stud', 
+            price: '$3.75 / each', 
+            distance: '3.8 miles', 
+            stock: '充足',
+            address: '163-15 Liberty Ave, Jamaica, NY',
+            link: '#'
+          },
+        ]);
+      } else if (lowerSearchText.includes('walnut') || lowerSearchText.includes('flooring')) {
         setResults([
           { 
             id: 4, 
@@ -72,7 +106,7 @@ const MaterialSearch = () => {
           },
         ]);
       } else {
-        // Corrected initial results for Sakrete Concrete Mix
+        // Default to Sakrete Concrete Mix if no specific keywords match
         setResults([
           { 
             id: 1, 
@@ -115,7 +149,7 @@ const MaterialSearch = () => {
 
   const handleCorrectionScan = () => {
     setIsCorrectionDialogOpen(false);
-    runSearch(correctionDescription, true);
+    runSearch(correctionDescription);
   };
 
   const resetSearch = () => {
