@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
 import { 
   Settings, 
@@ -13,12 +14,15 @@ import {
   Clock
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 const Profile = () => {
+  const navigate = useNavigate();
+
   const menuGroups = [
     {
       items: [
-        { id: 'wallet', name: '支付与钱包', icon: Wallet, color: 'text-blue-500' },
+        { id: 'wallet', name: '支付与钱包', icon: Wallet, color: 'text-blue-500', path: '/accounting' },
         { id: 'favorites', name: '收藏夹', icon: Bookmark, color: 'text-orange-500' },
       ]
     },
@@ -85,6 +89,7 @@ const Profile = () => {
             {group.items.map((item) => (
               <div 
                 key={item.id}
+                onClick={() => item.path && navigate(item.path)}
                 className="flex items-center px-4 py-3 active:bg-slate-100 transition-colors cursor-pointer"
               >
                 <item.icon className={cn("h-6 w-6", item.color)} />
@@ -102,5 +107,4 @@ const Profile = () => {
   );
 };
 
-import { cn } from "@/lib/utils";
 export default Profile;
