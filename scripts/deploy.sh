@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # ContractorPro Deployment Script
+# Repository: https://github.com/415geek/Contractor-Pro.git
 # Usage: ./scripts/deploy.sh
 
 set -e

@@ -18,7 +18,7 @@ git add .
 git commit -m "Initial commit"
 
 # 创建 GitHub 仓库后
-git remote add origin https://github.com/YOUR_USERNAME/contractorpro.git
+git remote add origin https://github.com/415geek/Contractor-Pro.git
 git branch -M main
 git push -u origin main
 ```
