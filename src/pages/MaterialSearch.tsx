@@ -2,20 +2,35 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Camera, Search, MapPin, ExternalLink, Phone } from 'lucide-react';
+import { ChevronLeft, Camera, Search, MapPin, ExternalLink, Phone, Upload, ImagePlus, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 const MaterialSearch = () => {
   const navigate = useNavigate();
   const [isScanning, setIsScanning] = React.useState(false);
   const [results, setResults] = React.useState<any[] | null>(null);
+  const [image, setImage] = React.useState<string | null>(null);
+  const [description, setDescription] = React.useState('');
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleScan = () => {
     setIsScanning(true);
-    // 模拟 Nova Act AI 搜索过程
+    // Simulate Nova Act AI 搜索过程
     setTimeout(() => {
       setIsScanning(false);
       setResults([
@@ -53,6 +68,12 @@ const MaterialSearch = () => {
     }, 2000);
   };
 
+  const resetSearch = () => {
+    setResults(null);
+    setImage(null);
+    setDescription('');
+  };
+
   return (
     <div className="min-h-screen bg-[#f7f7f7] flex flex-col max-w-md mx-auto shadow-2xl relative">
       {/* Header */}
@@ -64,33 +85,63 @@ const MaterialSearch = () => {
       </header>
 
       <div className="flex-1 p-4 space-y-6">
-        {/* Camera Viewport Simulation */}
-        <div className="relative aspect-[4/3] bg-black rounded-2xl overflow-hidden flex items-center justify-center border-4 border-white shadow-lg">
-          {!results && !isScanning ? (
-            <div className="text-center text-white space-y-4">
-              <div className="h-20 w-20 bg-white/10 rounded-full flex items-center justify-center mx-auto border border-white/20">
-                <Camera className="h-10 w-10" />
+        {/* Image Upload & Preview */}
+        <div className="relative aspect-video bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center border-2 border-dashed border-slate-200">
+          {!image && !isScanning && (
+            <div className="text-center text-slate-500 space-y-4 p-4">
+              <ImagePlus className="h-12 w-12 mx-auto text-slate-400" />
+              <p className="text-sm font-medium">请拍摄或上传材料照片</p>
+              <div className="flex justify-center gap-3">
+                <Button variant="outline" className="bg-white">
+                  <Camera className="h-4 w-4 mr-2" /> 拍照
+                </Button>
+                <Button asChild variant="outline" className="bg-white">
+                  <label htmlFor="upload-input" className="cursor-pointer flex items-center">
+                    <Upload className="h-4 w-4 mr-2" /> 上传
+                    <input id="upload-input" type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                </Button>
               </div>
-              <p className="text-sm font-medium">请拍摄材料标签或实物</p>
-              <Button onClick={handleScan} className="bg-indigo-600 hover:bg-indigo-700 rounded-full px-8">
-                开始识别
-              </Button>
             </div>
-          ) : isScanning ? (
+          )}
+
+          {image && !isScanning && (
+            <>
+              <img src={image} alt="Material Preview" className="w-full h-full object-contain bg-black" />
+              <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-8 w-8 rounded-full" onClick={() => setImage(null)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+
+          {isScanning && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60">
               <div className="w-48 h-48 border-2 border-indigo-400 rounded-lg relative overflow-hidden">
                 <div className="absolute inset-x-0 h-1 bg-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.8)] animate-scan-move"></div>
               </div>
               <p className="mt-6 text-indigo-300 font-bold animate-pulse">Nova Act AI 正在全网比价...</p>
             </div>
-          ) : (
-            <img 
-              src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=500" 
-              alt="Material" 
-              className="w-full h-full object-cover opacity-60"
-            />
           )}
         </div>
+
+        {/* Description & Scan Button */}
+        {!results && !isScanning && (
+          <div className="space-y-4 animate-in fade-in">
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-slate-700">物品描述 (选填)</Label>
+              <Textarea 
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="添加描述帮助 AI 更精准识别，例如：2x4 木方，8英尺长"
+                className="bg-white rounded-xl"
+              />
+            </div>
+            <Button onClick={handleScan} disabled={!image} className="w-full h-12 rounded-xl bg-indigo-600 text-base font-bold">
+              开始识别
+            </Button>
+          </div>
+        )}
 
         {/* Results List */}
         {results && (
@@ -140,9 +191,9 @@ const MaterialSearch = () => {
             <Button 
               variant="ghost" 
               className="w-full text-slate-400 text-xs"
-              onClick={() => setResults(null)}
+              onClick={resetSearch}
             >
-              重新拍摄
+              重新拍摄或上传
             </Button>
           </div>
         )}
