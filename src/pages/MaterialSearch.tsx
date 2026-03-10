@@ -2,10 +2,9 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Camera, Search, MapPin, ExternalLink, Phone, Upload, ImagePlus, X, Edit } from 'lucide-react';
+import { ChevronLeft, Camera, MapPin, Upload, ImagePlus, X, Edit, ExternalLink, Star } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { 
@@ -15,20 +14,21 @@ import {
   DialogTitle, 
   DialogDescription,
   DialogFooter,
-  DialogTrigger
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { supabase } from '@/integrations/supabase/client';
-import { showError } from '@/utils/toast';
+import { useToast } from "@/hooks/use-toast";
 
 const MaterialSearch = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isScanning, setIsScanning] = React.useState(false);
   const [results, setResults] = React.useState<any[] | null>(null);
   const [image, setImage] = React.useState<string | null>(null);
   const [description, setDescription] = React.useState('');
   const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = React.useState(false);
   const [correctionDescription, setCorrectionDescription] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -44,20 +44,38 @@ const MaterialSearch = () => {
   const runSearch = async (searchText: string) => {
     setIsScanning(true);
     setResults(null);
+    setError(null);
 
     try {
       const { data, error } = await supabase.functions.invoke('nova-act-search', {
-        body: { searchText: searchText || 'default' },
+        body: { 
+          searchText: searchText || 'building materials',
+          location: 'San Francisco, California, United States'
+        },
       });
 
       if (error) {
         throw error;
       }
 
-      setResults(data.results);
+      if (data.error) {
+        setError(data.error);
+        toast({
+          title: "搜索出错",
+          description: data.error,
+          variant: "destructive",
+        });
+      }
+
+      setResults(data.results || []);
     } catch (error: any) {
       console.error('Error invoking Supabase function:', error);
-      showError(`Error: ${error.message}`);
+      setError(error.message);
+      toast({
+        title: "搜索失败",
+        description: error.message,
+        variant: "destructive",
+      });
       setResults([]);
     } finally {
       setIsScanning(false);
@@ -78,6 +96,7 @@ const MaterialSearch = () => {
     setImage(null);
     setDescription('');
     setCorrectionDescription('');
+    setError(null);
   };
 
   return (
@@ -125,7 +144,7 @@ const MaterialSearch = () => {
               <div className="w-48 h-48 border-2 border-indigo-400 rounded-lg relative overflow-hidden">
                 <div className="absolute inset-x-0 h-1 bg-indigo-400 shadow-[0_0_15px_rgba(129,140,248,0.8)] animate-scan-move"></div>
               </div>
-              <p className="mt-6 text-indigo-300 font-bold animate-pulse">Nova Act AI 正在全网比价...</p>
+              <p className="mt-6 text-indigo-300 font-bold animate-pulse">正在全网搜索真实价格...</p>
             </div>
           )}
         </div>
@@ -149,44 +168,79 @@ const MaterialSearch = () => {
           </div>
         )}
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+            <p className="font-bold mb-1">搜索出错</p>
+            <p>{error}</p>
+            {error.includes('API key') && (
+              <p className="mt-2 text-xs">
+                请在 Supabase 控制台中添加 SERPAPI_KEY 密钥。
+                <a href="https://serpapi.com" target="_blank" rel="noopener noreferrer" className="underline ml-1">
+                  获取 API Key
+                </a>
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Results List */}
-        {results && (
+        {results && results.length > 0 && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-lg font-bold text-slate-900">搜索结果</h2>
+              <span className="text-xs text-slate-400">来自 Google Shopping</span>
             </div>
             
             {results.map((item) => (
               <Card key={item.id} className="border-none shadow-sm rounded-2xl overflow-hidden">
                 <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div className="flex gap-3">
+                    {item.thumbnail && (
+                      <img 
+                        src={item.thumbnail} 
+                        alt={item.name} 
+                        className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2">
-                        <span className="font-bold text-slate-900">{item.store}</span>
-                        <span className="text-[10px] text-slate-400">| {item.distance}</span>
+                        <span className="font-bold text-slate-900 text-sm">{item.store}</span>
+                        {item.rating && (
+                          <div className="flex items-center text-amber-500">
+                            <Star className="h-3 w-3 fill-current" />
+                            <span className="text-[10px] ml-0.5">{item.rating}</span>
+                          </div>
+                        )}
                       </div>
-                      <h3 className="text-sm text-slate-600 mt-1">{item.name}</h3>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-indigo-600">{item.price}</div>
-                      <div className={cn("text-[10px] font-medium", item.stock === '充足' ? "text-green-500" : "text-amber-500")}>
-                        库存: {item.stock}
+                      <h3 className="text-xs text-slate-600 mt-1 line-clamp-2">{item.name}</h3>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="text-lg font-bold text-indigo-600">{item.price}</div>
+                        <div className={cn("text-[10px] font-medium", item.stock === '充足' ? "text-green-500" : "text-amber-500")}>
+                          {item.stock}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                  
+                  <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
                     <div className="flex items-center text-[11px] text-slate-400">
                       <MapPin className="h-3 w-3 mr-1" />
-                      <span className="truncate max-w-[150px]">{item.address}</span>
+                      <span className="truncate max-w-[120px]">{item.address}</span>
                     </div>
+                    {item.link && item.link !== '#' && (
+                      <Button 
+                        size="sm" 
+                        className="h-7 rounded-lg bg-indigo-600 text-[11px]"
+                        onClick={() => window.open(item.link, '_blank')}
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" /> 购买
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             ))}
-            
-            <p className="text-xs text-slate-400 text-center px-4 pt-2">
-              *价格与地址为演示数据，仅供参考。
-            </p>
 
             <div className="flex gap-3">
               <Button variant="ghost" className="flex-1 text-slate-500" onClick={resetSearch}>
@@ -200,6 +254,14 @@ const MaterialSearch = () => {
                 <Edit className="h-3 w-3 mr-2" /> 材料不对？点击修正
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* No Results */}
+        {results && results.length === 0 && !error && (
+          <div className="text-center py-8">
+            <p className="text-slate-500">未找到相关产品</p>
+            <Button variant="link" onClick={resetSearch}>重新搜索</Button>
           </div>
         )}
       </div>
