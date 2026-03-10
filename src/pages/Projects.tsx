@@ -1,13 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import AppLayout from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, MapPin, ChevronRight, Users, Wrench } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ChevronLeft, Plus, ChevronRight, MoreHorizontal } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from "@/lib/utils";
 
@@ -44,102 +39,89 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
-  const ProjectSkeleton = () => (
-    <Card className="border-none shadow-sm rounded-2xl overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-3">
-          <div>
-            <Skeleton className="h-5 w-48" />
-            <Skeleton className="h-3 w-32 mt-2" />
-          </div>
-          <Skeleton className="h-5 w-16 rounded-full" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-3 w-4/5" />
-        </div>
-        <div className="mt-4 pt-3 border-t border-slate-50 flex justify-end">
-          <Skeleton className="h-4 w-20" />
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case '进行中': return 'text-[#07C160] bg-[#E8F8EE]';
+      case '待开始': return 'text-[#FA9D3B] bg-[#FFF8E8]';
+      case '已完成': return 'text-[#B2B2B2] bg-[#F5F5F5]';
+      default: return 'text-[#B2B2B2] bg-[#F5F5F5]';
+    }
+  };
 
   return (
-    <AppLayout title="项目管理">
-      <div className="p-4 space-y-4">
-        <div className="flex gap-3">
-          <Button className="flex-1 h-12 rounded-xl bg-indigo-600 shadow-md">
-            <Plus className="mr-2 h-5 w-5" /> 新建项目
-          </Button>
-          <Button 
-            variant="outline" 
-            className="h-12 rounded-xl border-slate-200 bg-white text-slate-600"
-            onClick={() => navigate('/clients')}
-          >
-            <Users className="h-5 w-5" />
-          </Button>
-        </div>
+    <div className="min-h-screen bg-[#EDEDED] flex flex-col max-w-md mx-auto relative">
+      {/* Header */}
+      <header className="h-[44px] bg-[#EDEDED] flex items-center justify-between px-1 sticky top-0 z-50 border-b border-[#D9D9D9]">
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center px-2 py-2 active:opacity-70"
+        >
+          <ChevronLeft className="h-6 w-6 text-[#191919]" />
+        </button>
+        <h1 className="text-[17px] font-medium text-[#191919]">我的项目</h1>
+        <button className="px-3 py-2 active:opacity-70">
+          <Plus className="h-6 w-6 text-[#191919]" />
+        </button>
+      </header>
 
-        <div className="space-y-3">
-          {loading ? (
-            <>
-              <ProjectSkeleton />
-              <ProjectSkeleton />
-              <ProjectSkeleton />
-            </>
-          ) : projects.length > 0 ? (
-            projects.map((project) => (
-              <Card 
-                key={project.id} 
+      <div className="flex-1 pt-2">
+        {loading ? (
+          <div className="bg-white">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 border-b border-[#F0F0F0] animate-pulse">
+                <div className="h-5 bg-[#F0F0F0] rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-[#F0F0F0] rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        ) : projects.length > 0 ? (
+          <div className="bg-white">
+            {projects.map((project, idx) => (
+              <div 
+                key={project.id}
                 onClick={() => navigate(`/project/${project.id}`)}
-                className="border-none shadow-sm rounded-2xl overflow-hidden active:scale-[0.98] transition-transform cursor-pointer"
+                className={cn(
+                  "p-4 active:bg-[#ECECEC] cursor-pointer",
+                  idx !== projects.length - 1 && "border-b border-[#F0F0F0]"
+                )}
               >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="font-bold text-slate-900">{project.name}</h3>
-                      <p className="text-xs text-slate-500 mt-0.5">客户: {project.client_name}</p>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center">
+                      <h3 className="text-[16px] text-[#191919] font-medium truncate">{project.name}</h3>
+                      <span className={cn(
+                        "ml-2 text-[11px] px-1.5 py-0.5 rounded flex-shrink-0",
+                        getStatusColor(project.status)
+                      )}>
+                        {project.status}
+                      </span>
                     </div>
-                    <Badge className={cn(
-                      "border-none rounded-full px-2 py-0.5 text-[10px]",
-                      project.status === '进行中' ? "bg-blue-100 text-blue-700" : 
-                      project.status === '待开始' ? "bg-amber-100 text-amber-700" : 
-                      "bg-emerald-100 text-emerald-700"
-                    )}>
-                      {project.status}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <div className="flex items-center text-[11px] text-slate-500">
-                      <MapPin className="h-3 w-3 mr-1.5" />
-                      {project.address}
-                    </div>
-                    <div className="flex items-center text-[11px] text-slate-500">
-                      <Calendar className="h-3 w-3 mr-1.5" />
-                      创建日期: {new Date(project.start_date).toLocaleDateString()}
+                    <p className="text-[14px] text-[#B2B2B2] mt-1 truncate">{project.address}</p>
+                    <div className="flex items-center mt-2 text-[12px] text-[#B2B2B2]">
+                      <span>客户: {project.client_name}</span>
+                      <span className="mx-2">·</span>
+                      <span>{new Date(project.start_date).toLocaleDateString()}</span>
                     </div>
                   </div>
-
-                  <div className="mt-4 pt-3 border-t border-slate-50 flex justify-end">
-                    <span className="text-indigo-600 text-xs font-bold flex items-center">
-                      查看详情 <ChevronRight className="ml-1 h-3 w-3" />
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <div className="text-center py-16 bg-slate-50 rounded-2xl">
-              <Wrench className="h-12 w-12 text-slate-300 mx-auto" />
-              <h3 className="mt-4 font-semibold text-slate-700">还没有项目</h3>
-              <p className="text-sm text-slate-500 mt-1">点击“新建项目”来开始第一个项目吧！</p>
-            </div>
-          )}
-        </div>
+                  <ChevronRight className="h-5 w-5 text-[#C4C4C4] flex-shrink-0 ml-2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <div className="text-[48px] mb-4">📋</div>
+            <p className="text-[#B2B2B2] text-[16px]">还没有项目</p>
+            <button 
+              onClick={() => {}}
+              className="mt-4 text-[#07C160] text-[16px]"
+            >
+              创建第一个项目
+            </button>
+          </div>
+        )}
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

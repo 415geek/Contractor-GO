@@ -7,19 +7,22 @@ import {
   Settings, 
   Wallet, 
   Bookmark, 
-  ShieldCheck, 
   ChevronRight,
   Star,
   CheckCircle2,
   Clock,
-  LogOut
+  QrCode,
+  CreditCard,
+  FileText,
+  HelpCircle
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -29,91 +32,94 @@ const Profile = () => {
   const menuGroups = [
     {
       items: [
-        { id: 'wallet', name: '支付与钱包', icon: Wallet, color: 'text-blue-500', path: '/accounting' },
-        { id: 'favorites', name: '收藏夹', icon: Bookmark, color: 'text-orange-500' },
+        { id: 'wallet', name: '钱包', icon: Wallet, color: 'bg-[#3E82F7]', path: '/accounting' },
       ]
     },
     {
       items: [
-        { id: 'verification', name: '资质认证', icon: ShieldCheck, color: 'text-green-500', subtitle: '已认证专业承包商' },
+        { id: 'favorites', name: '收藏', icon: Bookmark, color: 'bg-[#FA9D3B]' },
+        { id: 'files', name: '我的项目', icon: FileText, color: 'bg-[#07C160]', path: '/projects' },
+        { id: 'cards', name: '卡包', icon: CreditCard, color: 'bg-[#3E82F7]' },
       ]
     },
     {
       items: [
-        { id: 'settings', name: '设置', icon: Settings, color: 'text-slate-400' },
-      ]
-    },
-    {
-      items: [
-        { id: 'logout', name: '退出登录', icon: LogOut, color: 'text-red-500', action: handleLogout },
+        { id: 'settings', name: '设置', icon: Settings, color: 'bg-[#3E82F7]', path: '/settings' },
       ]
     }
   ];
 
   return (
-    <AppLayout title="">
-      <div className="bg-white pb-6">
-        {/* User Info Header */}
-        <div className="px-6 pt-8 pb-6 flex items-center">
-          <Avatar className="h-16 w-16 rounded-lg border-2 border-slate-100">
-            <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100" />
-            <AvatarFallback>我</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 flex-1">
-            <h2 className="text-xl font-bold text-slate-900">老王 (纽约专业装修)</h2>
-            <p className="text-sm text-slate-500 mt-1">微信号: Pro_Wang_NY</p>
+    <AppLayout title="" showHeader={false}>
+      {/* Profile Header */}
+      <div className="bg-white px-4 pt-12 pb-5">
+        <div className="flex items-center">
+          <div className="h-[64px] w-[64px] rounded-lg bg-gradient-to-br from-[#07C160] to-[#06AE56] flex items-center justify-center text-white text-[24px] font-medium">
+            老
           </div>
-          <ChevronRight className="h-5 w-5 text-slate-300" />
+          <div className="ml-4 flex-1">
+            <h2 className="text-[18px] font-medium text-[#191919]">老王</h2>
+            <p className="text-[14px] text-[#B2B2B2] mt-0.5">微信号: Pro_Wang_NY</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <QrCode className="h-5 w-5 text-[#B2B2B2]" />
+            <ChevronRight className="h-5 w-5 text-[#C4C4C4]" />
+          </div>
         </div>
 
-        {/* Professional Stats */}
-        <div className="px-4">
-          <div className="bg-slate-50 rounded-2xl p-4 grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="flex items-center justify-center text-amber-500 mb-1">
-                <Star className="h-4 w-4 fill-current" />
-                <span className="ml-1 text-sm font-bold">4.9</span>
-              </div>
-              <div className="text-[10px] text-slate-400">客户评分</div>
+        {/* Stats */}
+        <div className="flex items-center mt-5 pt-4 border-t border-[#F0F0F0]">
+          <div className="flex-1 text-center">
+            <div className="text-[18px] font-medium text-[#191919]">128</div>
+            <div className="text-[12px] text-[#B2B2B2] mt-0.5">完工项目</div>
+          </div>
+          <div className="w-px h-8 bg-[#F0F0F0]"></div>
+          <div className="flex-1 text-center">
+            <div className="text-[18px] font-medium text-[#191919] flex items-center justify-center">
+              4.9 <Star className="h-3 w-3 text-[#FA9D3B] fill-[#FA9D3B] ml-1" />
             </div>
-            <div className="text-center border-x border-slate-200">
-              <div className="flex items-center justify-center text-indigo-600 mb-1">
-                <CheckCircle2 className="h-4 w-4" />
-                <span className="ml-1 text-sm font-bold">128</span>
-              </div>
-              <div className="text-[10px] text-slate-400">完工项目</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center text-emerald-600 mb-1">
-                <Clock className="h-4 w-4" />
-                <span className="ml-1 text-sm font-bold">12年</span>
-              </div>
-              <div className="text-[10px] text-slate-400">从业经验</div>
-            </div>
+            <div className="text-[12px] text-[#B2B2B2] mt-0.5">客户评分</div>
+          </div>
+          <div className="w-px h-8 bg-[#F0F0F0]"></div>
+          <div className="flex-1 text-center">
+            <div className="text-[18px] font-medium text-[#191919]">12年</div>
+            <div className="text-[12px] text-[#B2B2B2] mt-0.5">从业经验</div>
           </div>
         </div>
       </div>
 
       {/* Menu Items */}
-      <div className="space-y-3 py-3">
+      <div className="space-y-2 pt-2">
         {menuGroups.map((group, gIdx) => (
-          <div key={gIdx} className="bg-white border-y border-slate-200 divide-y divide-slate-100">
-            {group.items.map((item) => (
+          <div key={gIdx} className="bg-white">
+            {group.items.map((item, idx) => (
               <div 
                 key={item.id}
-                onClick={() => item.path ? navigate(item.path) : (item.action ? item.action() : null)}
-                className="flex items-center px-4 py-3 active:bg-slate-100 transition-colors cursor-pointer"
+                onClick={() => item.path && navigate(item.path)}
+                className={cn(
+                  "flex items-center px-4 py-3 active:bg-[#ECECEC] transition-colors cursor-pointer",
+                  idx !== group.items.length - 1 && "border-b border-[#F0F0F0] ml-[52px]"
+                )}
               >
-                <item.icon className={cn("h-6 w-6", item.color)} />
-                <div className="ml-3 flex-1">
-                  <div className="text-[16px] text-slate-900">{item.name}</div>
-                  {item.subtitle && <div className="text-[11px] text-slate-400">{item.subtitle}</div>}
+                <div className={cn("h-[40px] w-[40px] rounded-lg flex items-center justify-center", item.color)}>
+                  <item.icon className="h-5 w-5 text-white" />
                 </div>
-                <ChevronRight className="h-5 w-5 text-slate-300" />
+                <span className="ml-3 flex-1 text-[16px] text-[#191919]">{item.name}</span>
+                <ChevronRight className="h-5 w-5 text-[#C4C4C4]" />
               </div>
             ))}
           </div>
         ))}
+
+        {/* Logout */}
+        <div className="bg-white mt-2">
+          <div 
+            onClick={handleLogout}
+            className="flex items-center justify-center py-3 active:bg-[#ECECEC] cursor-pointer"
+          >
+            <span className="text-[16px] text-[#FA5151]">退出登录</span>
+          </div>
+        </div>
       </div>
     </AppLayout>
   );

@@ -2,83 +2,108 @@
 
 import React from 'react';
 import AppLayout from '@/components/AppLayout';
-import { Search, Plus, Phone, Mail, MapPin, MoreVertical } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from 'react-router-dom';
+import { Search, UserPlus, ChevronRight, Scan, Users, Tag } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
-const clients = [
-  { id: 1, name: '张伟', email: 'zhangwei@example.com', phone: '138-0000-1111', address: '朝阳区幸福大街12号', jobs: 3, lastActive: '2天前' },
-  { id: 2, name: '李娜', email: 'lina@example.com', phone: '139-1111-2222', address: '海淀区中关村南路5号', jobs: 1, lastActive: '1周前' },
-  { id: 3, name: '王强', email: 'wangqiang@example.com', phone: '137-2222-3333', address: '丰台区科技园路88号', jobs: 5, lastActive: '今天' },
-  { id: 4, name: '赵敏', email: 'zhaomin@example.com', phone: '136-3333-4444', address: '西城区金融街2号', jobs: 2, lastActive: '3小时前' },
-  { id: 5, name: '孙立', email: 'sunli@example.com', phone: '135-4444-5555', address: '东城区王府井大街1号', jobs: 0, lastActive: '1个月前' },
+const quickActions = [
+  { id: 'new-client', name: '新的客户', icon: UserPlus, color: 'bg-[#FA9D3B]' },
+  { id: 'groups', name: '项目群聊', icon: Users, color: 'bg-[#07C160]' },
+  { id: 'tags', name: '标签', icon: Tag, color: 'bg-[#576B95]' },
 ];
 
+const clients = [
+  { id: 1, name: '张伟', pinyin: 'Z', phone: '138-0000-1111', projects: 3 },
+  { id: 2, name: '李娜', pinyin: 'L', phone: '139-1111-2222', projects: 1 },
+  { id: 3, name: '王强', pinyin: 'W', phone: '137-2222-3333', projects: 5 },
+  { id: 4, name: '赵敏', pinyin: 'Z', phone: '136-3333-4444', projects: 2 },
+  { id: 5, name: 'John Smith', pinyin: 'J', phone: '135-4444-5555', projects: 2 },
+  { id: 6, name: 'Mike Wilson', pinyin: 'M', phone: '134-5555-6666', projects: 1 },
+];
+
+// Group clients by first letter
+const groupedClients = clients.reduce((acc, client) => {
+  const letter = client.pinyin;
+  if (!acc[letter]) acc[letter] = [];
+  acc[letter].push(client);
+  return acc;
+}, {} as Record<string, typeof clients>);
+
+const sortedLetters = Object.keys(groupedClients).sort();
+
 const Clients = () => {
+  const navigate = useNavigate();
+
+  const headerRight = (
+    <UserPlus className="h-[22px] w-[22px] text-[#191919]" />
+  );
+
   return (
-    <AppLayout title="客户管理">
-      <div className="p-4 space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <Input placeholder="搜索客户姓名或电话..." className="pl-10 rounded-xl border-slate-200 bg-white" />
+    <AppLayout title="通讯录" headerRight={headerRight}>
+      {/* Search Bar */}
+      <div className="px-3 py-2 bg-[#EDEDED]">
+        <div className="h-[32px] bg-white rounded-md flex items-center px-3">
+          <Search className="h-4 w-4 text-[#B2B2B2] mr-2" />
+          <span className="text-[14px] text-[#B2B2B2]">搜索</span>
         </div>
+      </div>
 
-        <div className="space-y-3">
-          {clients.map((client) => (
-            <Card key={client.id} className="border-none shadow-sm rounded-2xl overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center">
-                    <Avatar className="h-10 w-10 rounded-full">
-                      <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold">
-                        {client.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="ml-3">
-                      <h3 className="font-bold text-slate-900">{client.name}</h3>
-                      <p className="text-[10px] text-slate-400">最后活跃: {client.lastActive}</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon" className="text-slate-400 h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </div>
+      {/* Quick Actions */}
+      <div className="bg-white mb-2">
+        {quickActions.map((action, idx) => (
+          <div 
+            key={action.id}
+            className={cn(
+              "flex items-center px-4 py-3 active:bg-[#ECECEC] cursor-pointer",
+              idx !== quickActions.length - 1 && "border-b border-[#F0F0F0]"
+            )}
+          >
+            <div className={cn("h-[40px] w-[40px] rounded-md flex items-center justify-center", action.color)}>
+              <action.icon className="h-5 w-5 text-white" />
+            </div>
+            <span className="ml-3 text-[16px] text-[#191919]">{action.name}</span>
+          </div>
+        ))}
+      </div>
 
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-xs text-slate-600">
-                    <Phone className="h-3 w-3 mr-2 text-slate-400" />
-                    {client.phone}
-                  </div>
-                  <div className="flex items-center text-xs text-slate-600">
-                    <MapPin className="h-3 w-3 mr-2 text-slate-400" />
-                    <span className="truncate">{client.address}</span>
-                  </div>
+      {/* Clients List */}
+      {sortedLetters.map((letter) => (
+        <div key={letter}>
+          <div className="px-4 py-1.5 bg-[#EDEDED]">
+            <span className="text-[13px] text-[#888888]">{letter}</span>
+          </div>
+          <div className="bg-white">
+            {groupedClients[letter].map((client, idx) => (
+              <div 
+                key={client.id}
+                onClick={() => navigate(`/client/${client.id}`)}
+                className={cn(
+                  "flex items-center px-4 py-3 active:bg-[#ECECEC] cursor-pointer",
+                  idx !== groupedClients[letter].length - 1 && "border-b border-[#F0F0F0] ml-[56px]"
+                )}
+              >
+                <div className="h-[40px] w-[40px] rounded-md bg-[#C4C4C4] flex items-center justify-center text-white font-medium">
+                  {client.name[0]}
                 </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-                  <div className="text-[11px]">
-                    <span className="font-bold text-slate-900">{client.jobs}</span>
-                    <span className="text-slate-500 ml-1">个合作项目</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" className="h-7 rounded-lg text-[11px] border-slate-200">
-                      联系客户
-                    </Button>
-                    <Button size="sm" className="h-7 rounded-lg text-[11px] bg-indigo-600">
-                      查看历史
-                    </Button>
-                  </div>
+                <div className="ml-3 flex-1">
+                  <span className="text-[16px] text-[#191919]">{client.name}</span>
+                  {client.projects > 0 && (
+                    <span className="text-[12px] text-[#B2B2B2] ml-2">{client.projects}个项目</span>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            ))}
+          </div>
         </div>
+      ))}
 
-        <Button className="w-full h-12 rounded-xl bg-white text-indigo-600 border border-indigo-100 shadow-sm mt-4">
-          <Plus className="mr-2 h-5 w-5" /> 添加新客户
-        </Button>
+      {/* Letter Index - Right Side */}
+      <div className="fixed right-1 top-1/2 -translate-y-1/2 flex flex-col items-center space-y-0.5 z-40">
+        {sortedLetters.map((letter) => (
+          <span key={letter} className="text-[10px] text-[#07C160] font-medium px-1">
+            {letter}
+          </span>
+        ))}
       </div>
     </AppLayout>
   );
