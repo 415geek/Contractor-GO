@@ -55,30 +55,30 @@ const MaterialSearch = () => {
             id: 1, 
             store: 'Home Depot', 
             name: '2 in. x 4 in. x 8 ft. #2 Prime Douglas Fir Stud', 
-            price: '$3.88 / each', 
+            price: '$4.52 / each', 
             distance: '1.5 miles', 
             stock: '充足',
-            address: '123 Main St, San Francisco, CA',
+            address: '200 Bayshore Blvd, San Francisco, CA',
             link: '#'
           },
           { 
             id: 2, 
             store: 'Lowe\'s', 
             name: '2-in x 4-in x 8-ft Whitewood Stud', 
-            price: '$3.95 / each', 
+            price: '$4.65 / each', 
             distance: '3.2 miles', 
             stock: '充足',
-            address: '456 Broadway, Oakland, CA',
+            address: '520 High St, Oakland, CA',
             link: '#'
           },
           { 
             id: 3, 
             store: 'Golden State Lumber', 
             name: '2x4-8\' SPF Stud', 
-            price: '$4.10 / each', 
+            price: '$4.95 / each', 
             distance: '5.1 miles', 
             stock: '充足',
-            address: '163 Industrial Rd, San Carlos, CA',
+            address: '401 Du Bois St, San Rafael, CA',
             link: '#'
           },
         ]);
@@ -101,7 +101,7 @@ const MaterialSearch = () => {
             price: '$8.25 / sq ft', 
             distance: '1.5 miles', 
             stock: '充足',
-            address: '123 Main St, San Francisco, CA',
+            address: '200 Bayshore Blvd, San Francisco, CA',
             link: '#'
           },
         ]);
@@ -115,7 +115,7 @@ const MaterialSearch = () => {
             price: '$7.25 / bag', 
             distance: '1.5 miles', 
             stock: '充足',
-            address: '123 Main St, San Francisco, CA',
+            address: '200 Bayshore Blvd, San Francisco, CA',
             link: '#'
           },
           { 
@@ -125,7 +125,7 @@ const MaterialSearch = () => {
             price: '$7.25 / bag', 
             distance: '3.2 miles', 
             stock: '充足',
-            address: '456 Broadway, Oakland, CA',
+            address: '520 High St, Oakland, CA',
             link: '#'
           },
           { 
@@ -263,7 +263,11 @@ const MaterialSearch = () => {
               </Card>
             ))}
             
-            <div className="flex gap-3 pt-2">
+            <p className="text-xs text-slate-400 text-center px-4 pt-2">
+              *价格与地址为演示数据，仅供参考。
+            </p>
+
+            <div className="flex gap-3">
               <Button variant="ghost" className="flex-1 text-slate-500" onClick={resetSearch}>
                 重新搜索
               </Button>
