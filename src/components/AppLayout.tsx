@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { name: '首页', href: '/', icon: LayoutGrid },
+  { name: '首页', href: '/dashboard', icon: LayoutGrid },
   { name: '消息', href: '/messages', icon: MessageSquare },
   { name: '项目', href: '/projects', icon: Briefcase },
   { name: '发现', href: '/discover', icon: Compass },
@@ -43,7 +43,7 @@ const AppLayout = ({ children, title }: { children: React.ReactNode, title?: str
       {/* Bottom Navigation - WeChat Style */}
       <nav className="h-14 bg-[#f7f7f7] border-t border-slate-200 flex justify-around items-center fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.href;
+          const isActive = location.pathname === item.href || (item.href === '/dashboard' && location.pathname === '/');
           return (
             <Link
               key={item.name}
