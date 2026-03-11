@@ -28,7 +28,7 @@ const AppLayout = ({ children, title, showHeader = true, headerRight }: AppLayou
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative shadow-2xl">
+    <div className="min-h-screen bg-background flex flex-col mx-auto relative md:shadow-2xl md:max-w-md">
       {/* Header */}
       {showHeader && (
         <header className="h-14 bg-background flex items-center justify-between px-4 sticky top-0 z-50 border-b">
@@ -42,12 +42,12 @@ const AppLayout = ({ children, title, showHeader = true, headerRight }: AppLayou
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-16">
+      <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
         {children}
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="h-16 bg-card border-t flex justify-around items-center fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50">
+      {/* Bottom Navigation - Mobile Only */}
+      <nav className="h-16 bg-card border-t flex justify-around items-center fixed bottom-0 left-0 right-0 z-50 md:hidden">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || 
             (item.href === '/dashboard' && location.pathname === '/');
@@ -74,6 +74,38 @@ const AppLayout = ({ children, title, showHeader = true, headerRight }: AppLayou
           );
         })}
       </nav>
+
+      {/* Sidebar Navigation - Desktop Only */}
+      <aside className="hidden md:flex md:w-64 md:fixed md:left-0 md:top-0 md:h-screen md:bg-card md:border-r md:flex-col md:pt-20">
+        <div className="flex-1 overflow-y-auto">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.href || 
+              (item.href === '/dashboard' && location.pathname === '/');
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={cn(
+                  "flex items-center px-4 py-3 mx-2 my-1 rounded-lg transition-colors",
+                  isActive 
+                    ? "bg-primary text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                <item.icon className="h-5 w-5 mr-3" />
+                <span className="font-medium">{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </aside>
+
+      {/* Main Content Wrapper for Desktop */}
+      <div className="hidden md:block md:ml-64 md:min-h-screen">
+        <div className="p-6">
+          {children}
+        </div>
+      </div>
     </div>
   );
 };

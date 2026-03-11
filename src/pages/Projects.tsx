@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Calendar, MapPin, ChevronRight } from 'lucide-react';
+import { Plus, Search, Calendar, MapPin, ChevronRight, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -61,7 +61,7 @@ const Projects = () => {
   );
 
   const headerRight = (
-    <Button size="sm" onClick={() => navigate('/projects/new')}>
+    <Button size="sm" onClick={() => navigate('/projects/new')} className="hidden md:flex">
       <Plus className="h-4 w-4 mr-2" />
       新项目
     </Button>
@@ -69,50 +69,77 @@ const Projects = () => {
 
   return (
     <AppLayout title="项目" headerRight={headerRight}>
-      <div className="p-4 space-y-4">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="搜索项目..." 
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      <div className="p-4 md:p-6 space-y-4">
+        {/* Search and Filter Bar */}
+        <div className="flex gap-2 md:gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="搜索项目..." 
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" className="md:hidden">
+            <Filter className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Desktop Filter Bar */}
+        <div className="hidden md:flex md:items-center md:space-x-4 md:pb-4">
+          <span className="text-sm text-muted-foreground">筛选:</span>
+          <Button variant="ghost" size="sm" className="text-primary">全部</Button>
+          <Button variant="ghost" size="sm">进行中</Button>
+          <Button variant="ghost" size="sm">待开始</Button>
+          <Button variant="ghost" size="sm">已完成</Button>
+          <div className="flex-1"></div>
+          <Button onClick={() => navigate('/projects/new')}>
+            <Plus className="h-4 w-4 mr-2" />
+            新项目
+          </Button>
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 md:grid-cols-4 md:gap-4">
           <Card className="text-center">
-            <CardContent className="p-3">
-              <div className="text-lg font-bold text-primary">
+            <CardContent className="p-3 md:p-4">
+              <div className="text-lg md:text-xl font-bold text-primary">
                 {projects.filter(p => p.status === '进行中').length}
               </div>
               <div className="text-xs text-muted-foreground">进行中</div>
             </CardContent>
           </Card>
           <Card className="text-center">
-            <CardContent className="p-3">
-              <div className="text-lg font-bold text-amber-600">
+            <CardContent className="p-3 md:p-4">
+              <div className="text-lg md:text-xl font-bold text-amber-600">
                 {projects.filter(p => p.status === '待开始').length}
               </div>
               <div className="text-xs text-muted-foreground">待开始</div>
             </CardContent>
           </Card>
           <Card className="text-center">
-            <CardContent className="p-3">
-              <div className="text-lg font-bold text-green-600">
+            <CardContent className="p-3 md:p-4">
+              <div className="text-lg md:text-xl font-bold text-green-600">
                 {projects.filter(p => p.status === '已完成').length}
               </div>
               <div className="text-xs text-muted-foreground">已完成</div>
+            </CardContent>
+          </Card>
+          <Card className="text-center hidden md:block">
+            <CardContent className="p-4">
+              <div className="text-xl font-bold text-purple-600">
+                {projects.length}
+              </div>
+              <div className="text-xs text-muted-foreground">总计</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Projects List */}
         {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
+          <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
+            {[1, 2, 3, 4].map((i) => (
               <Card key={i} className="animate-pulse">
                 <CardContent className="p-4">
                   <div className="h-5 bg-muted rounded w-3/4 mb-3"></div>
@@ -122,16 +149,16 @@ const Projects = () => {
             ))}
           </div>
         ) : filteredProjects.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {filteredProjects.map((project) => (
               <Card 
                 key={project.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
+                className="cursor-pointer hover:shadow-md transition-shadow md:h-full"
                 onClick={() => navigate(`/project/${project.id}`)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-foreground">{project.name}</h3>
+                    <h3 className="font-semibold text-foreground md:text-base">{project.name}</h3>
                     <Badge className={getStatusColor(project.status)}>
                       {project.status}
                     </Badge>
@@ -139,7 +166,7 @@ const Projects = () => {
                   
                   <div className="flex items-center text-sm text-muted-foreground mb-2">
                     <MapPin className="h-4 w-4 mr-1" />
-                    <span>{project.address}</span>
+                    <span className="line-clamp-1">{project.address}</span>
                   </div>
                   
                   <div className="flex items-center justify-between text-sm">
@@ -154,7 +181,7 @@ const Projects = () => {
             ))}
           </div>
         ) : (
-          <Card>
+          <Card className="md:col-span-2">
             <CardContent className="p-8 text-center">
               <div className="text-4xl mb-4">📋</div>
               <p className="text-muted-foreground mb-4">还没有项目</p>

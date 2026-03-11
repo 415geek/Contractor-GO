@@ -47,10 +47,10 @@ const Dashboard = () => {
 
   const headerRight = (
     <>
-      <Button variant="ghost" size="icon">
+      <Button variant="ghost" size="icon" className="hidden md:flex">
         <Search className="h-5 w-5" />
       </Button>
-      <Button size="sm" onClick={() => navigate('/projects/new')}>
+      <Button size="sm" onClick={() => navigate('/projects/new')} className="hidden md:flex">
         <Plus className="h-4 w-4 mr-2" />
         新项目
       </Button>
@@ -59,15 +59,27 @@ const Dashboard = () => {
 
   return (
     <AppLayout title="仪表盘" headerRight={headerRight}>
-      <div className="p-4 space-y-6">
+      <div className="p-4 md:p-6 space-y-6">
         {/* Welcome Header */}
-        <div>
-          <p className="text-muted-foreground">早上好,</p>
-          <h2 className="text-2xl font-bold text-foreground">老王</h2>
+        <div className="md:flex md:items-center md:justify-between">
+          <div>
+            <p className="text-muted-foreground">早上好,</p>
+            <h2 className="text-2xl font-bold text-foreground">老王</h2>
+          </div>
+          <div className="hidden md:flex md:space-x-2 md:mt-0 mt-4">
+            <Button variant="outline" size="sm">
+              <Search className="h-4 w-4 mr-2" />
+              搜索
+            </Button>
+            <Button size="sm" onClick={() => navigate('/projects/new')}>
+              <Plus className="h-4 w-4 mr-2" />
+              新项目
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Card>
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">进行中项目</p>
@@ -78,6 +90,18 @@ const Dashboard = () => {
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">待处理消息</p>
               <p className="text-2xl font-bold">2</p>
+            </CardContent>
+          </Card>
+          <Card className="hidden md:block">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">本月收入</p>
+              <p className="text-2xl font-bold">$12.5K</p>
+            </CardContent>
+          </Card>
+          <Card className="hidden md:block">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">客户评分</p>
+              <p className="text-2xl font-bold">4.9</p>
             </CardContent>
           </Card>
         </div>
@@ -135,6 +159,44 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Additional Desktop Sections */}
+        <div className="hidden md:grid md:grid-cols-2 md:gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">项目进度</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Flushing 厨房翻新</span>
+                  <span className="text-sm font-semibold">35%</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div className="bg-primary h-2 rounded-full" style={{width: '35%'}}></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">待办事项</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center text-sm">
+                  <div className="h-2 w-2 bg-primary rounded-full mr-2"></div>
+                  <span>联系材料供应商</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <div className="h-2 w-2 bg-amber-500 rounded-full mr-2"></div>
+                  <span>确认客户付款</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AppLayout>
   );
