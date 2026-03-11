@@ -3,12 +3,16 @@
 import React from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
-import { Badge } from "@/components/ui/badge";
+import { Search, MessageSquare, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 const chats = [
   { 
     id: '1', 
-    name: 'John Smith (客户)', 
+    name: 'John Smith', 
     lastMsg: 'AI翻译: 好的，明天早上9点见。', 
     time: '14:30', 
     unread: 2, 
@@ -17,7 +21,7 @@ const chats = [
   },
   { 
     id: '2', 
-    name: 'Mike Wilson (屋顶项目)', 
+    name: 'Mike Wilson', 
     lastMsg: 'AI翻译: 预算已经超支了，我们需要谈谈。', 
     time: '昨天', 
     unread: 0, 
@@ -38,36 +42,62 @@ const chats = [
 const Messages = () => {
   const navigate = useNavigate();
 
+  const headerRight = (
+    <Button variant="ghost" size="icon">
+      <Plus className="h-5 w-5" />
+    </Button>
+  );
+
   return (
-    <AppLayout title="微信 (3)">
-      <div className="bg-white divide-y divide-slate-100">
-        {chats.map((chat) => (
-          <div 
-            key={chat.id} 
-            onClick={() => navigate(`/chat/${chat.id}`)}
-            className="flex items-center px-4 py-3 active:bg-slate-100 transition-colors cursor-pointer"
-          >
-            <div className="relative">
-              <div className="h-12 w-12 rounded-md bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-lg">
-                {chat.avatar}
+    <AppLayout title="消息" headerRight={headerRight}>
+      <div className="p-4 space-y-4">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="搜索消息..." className="pl-10" />
+        </div>
+
+        {/* Chats List */}
+        <div className="bg-card rounded-lg border">
+          {chats.map((chat) => (
+            <div 
+              key={chat.id} 
+              onClick={() => navigate(`/chat/${chat.id}`)}
+              className="flex items-center p-4 cursor-pointer hover:bg-muted/50 transition-colors border-b last:border-b-0"
+            >
+              <Avatar className="h-12 w-12">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {chat.avatar}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="ml-3 flex-1 min-w-0">
+                <div className="flex justify-between items-baseline">
+                  <h3 className="font-semibold text-foreground truncate">{chat.name}</h3>
+                  <span className="text-xs text-muted-foreground">{chat.time}</span>
+                </div>
+                <p className="text-sm text-muted-foreground truncate mt-1">
+                  {chat.lastMsg}
+                </p>
               </div>
+              
               {chat.unread > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 bg-[#fa5151] text-white border-none flex items-center justify-center text-[10px] rounded-full">
+                <Badge className="ml-2 bg-primary text-primary-foreground">
                   {chat.unread}
                 </Badge>
               )}
             </div>
-            <div className="ml-3 flex-1 min-w-0">
-              <div className="flex justify-between items-baseline">
-                <h3 className="text-[16px] font-medium text-slate-900 truncate">{chat.name}</h3>
-                <span className="text-[11px] text-slate-400">{chat.time}</span>
-              </div>
-              <p className="text-[13px] text-slate-500 truncate mt-0.5">
-                {chat.lastMsg}
-              </p>
-            </div>
+          ))}
+        </div>
+
+        {/* Empty State */}
+        {chats.length === 0 && (
+          <div className="text-center py-12">
+            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">还没有消息</p>
+            <p className="text-sm text-muted-foreground mt-1">开始与客户或供应商沟通吧</p>
           </div>
-        ))}
+        )}
       </div>
     </AppLayout>
   );
