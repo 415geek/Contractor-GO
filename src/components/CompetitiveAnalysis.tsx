@@ -1,0 +1,6 @@
+// ... existing imports ...
+const CompetitiveAnalysis = () => {
+  // ... existing component code ...
+};
+
+export default CompetitiveAnalysis;
