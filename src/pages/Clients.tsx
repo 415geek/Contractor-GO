@@ -3,13 +3,16 @@
 import React from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
-import { Search, UserPlus, ChevronRight, Scan, Users, Tag } from 'lucide-react';
-import { cn } from "@/lib/utils";
+import { Search, UserPlus, Users, Tag } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const quickActions = [
-  { id: 'new-client', name: '新的客户', icon: UserPlus, color: 'bg-[#FA9D3B]' },
-  { id: 'groups', name: '项目群聊', icon: Users, color: 'bg-[#07C160]' },
-  { id: 'tags', name: '标签', icon: Tag, color: 'bg-[#576B95]' },
+  { id: 'new-client', name: '新的客户', icon: UserPlus, color: 'text-blue-500', bgColor: 'bg-blue-50' },
+  { id: 'groups', name: '项目群聊', icon: Users, color: 'text-green-500', bgColor: 'bg-green-50' },
+  { id: 'tags', name: '标签', icon: Tag, color: 'text-purple-500', bgColor: 'bg-purple-50' },
 ];
 
 const clients = [
@@ -35,75 +38,76 @@ const Clients = () => {
   const navigate = useNavigate();
 
   const headerRight = (
-    <UserPlus className="h-[22px] w-[22px] text-[#191919]" />
+    <Button size="sm">
+      <UserPlus className="h-4 w-4 mr-2" />
+      新客户
+    </Button>
   );
 
   return (
-    <AppLayout title="通讯录" headerRight={headerRight}>
-      {/* Search Bar */}
-      <div className="px-3 py-2 bg-[#EDEDED]">
-        <div className="h-[32px] bg-white rounded-md flex items-center px-3">
-          <Search className="h-4 w-4 text-[#B2B2B2] mr-2" />
-          <span className="text-[14px] text-[#B2B2B2]">搜索</span>
+    <AppLayout title="客户" headerRight={headerRight}>
+      <div className="p-4 space-y-4">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="搜索客户..." className="pl-10" />
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white mb-2">
-        {quickActions.map((action, idx) => (
-          <div 
-            key={action.id}
-            className={cn(
-              "flex items-center px-4 py-3 active:bg-[#ECECEC] cursor-pointer",
-              idx !== quickActions.length - 1 && "border-b border-[#F0F0F0]"
-            )}
-          >
-            <div className={cn("h-[40px] w-[40px] rounded-md flex items-center justify-center", action.color)}>
-              <action.icon className="h-5 w-5 text-white" />
-            </div>
-            <span className="ml-3 text-[16px] text-[#191919]">{action.name}</span>
-          </div>
-        ))}
+        {/* Quick Actions */}
+        <Card>
+          <CardContent className="p-2">
+            {quickActions.map((action) => (
+              <div 
+                key={action.id}
+                className="flex items-center p-2 rounded-lg active:bg-secondary cursor-pointer"
+              >
+                <div className={`h-8 w-8 rounded-md flex items-center justify-center ${action.bgColor}`}>
+                  <action.icon className={`h-4 w-4 ${action.color}`} />
+                </div>
+                <span className="ml-3 font-medium text-foreground">{action.name}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Clients List */}
-      {sortedLetters.map((letter) => (
-        <div key={letter}>
-          <div className="px-4 py-1.5 bg-[#EDEDED]">
-            <span className="text-[13px] text-[#888888]">{letter}</span>
-          </div>
-          <div className="bg-white">
-            {groupedClients[letter].map((client, idx) => (
-              <div 
-                key={client.id}
-                onClick={() => navigate(`/client/${client.id}`)}
-                className={cn(
-                  "flex items-center px-4 py-3 active:bg-[#ECECEC] cursor-pointer",
-                  idx !== groupedClients[letter].length - 1 && "border-b border-[#F0F0F0] ml-[56px]"
-                )}
-              >
-                <div className="h-[40px] w-[40px] rounded-md bg-[#C4C4C4] flex items-center justify-center text-white font-medium">
-                  {client.name[0]}
-                </div>
-                <div className="ml-3 flex-1">
-                  <span className="text-[16px] text-[#191919]">{client.name}</span>
-                  {client.projects > 0 && (
-                    <span className="text-[12px] text-[#B2B2B2] ml-2">{client.projects}个项目</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {/* Letter Index - Right Side */}
-      <div className="fixed right-1 top-1/2 -translate-y-1/2 flex flex-col items-center space-y-0.5 z-40">
+      <div className="relative">
         {sortedLetters.map((letter) => (
-          <span key={letter} className="text-[10px] text-[#07C160] font-medium px-1">
-            {letter}
-          </span>
+          <div key={letter}>
+            <div className="px-4 py-1.5 bg-secondary">
+              <span className="text-sm font-semibold text-muted-foreground">{letter}</span>
+            </div>
+            <div className="bg-card">
+              {groupedClients[letter].map((client) => (
+                <div 
+                  key={client.id}
+                  onClick={() => navigate(`/client/${client.id}`)}
+                  className="flex items-center px-4 py-3 active:bg-secondary cursor-pointer border-b"
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback>{client.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="ml-3 flex-1">
+                    <span className="font-medium text-foreground">{client.name}</span>
+                    {client.projects > 0 && (
+                      <span className="text-xs text-muted-foreground ml-2">{client.projects}个项目</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ))}
+        
+        {/* Letter Index - Right Side */}
+        <div className="fixed right-1 top-1/2 -translate-y-1/2 flex flex-col items-center space-y-1 z-40 bg-background/50 backdrop-blur-sm p-1 rounded-full">
+          {sortedLetters.map((letter) => (
+            <a href={`#${letter}`} key={letter} className="text-xs font-bold text-primary px-1">
+              {letter}
+            </a>
+          ))}
+        </div>
       </div>
     </AppLayout>
   );

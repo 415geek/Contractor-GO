@@ -4,47 +4,35 @@
 
 @layer base {
   :root {
-    /* WeChat-inspired color palette */
-    --background: 240 6% 97%;
-    --foreground: 0 0% 13%;
+    --background: 210 40% 98%; /* Light Gray */
+    --foreground: 222.2 84% 4.9%; /* Dark Gray / Almost Black */
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 13%;
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    /* WeChat Green as primary */
-    --primary: 142 70% 45%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 221.2 83.2% 53.3%; /* Professional Blue */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 0 0% 13%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 240 5% 96%;
-    --accent-foreground: 0 0% 13%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 142 70% 45%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
 
-    --radius: 0.5rem;
-
-    /* WeChat specific colors */
-    --wechat-green: #07C160;
-    --wechat-green-dark: #06AE56;
-    --wechat-bg: #EDEDED;
-    --wechat-card: #FFFFFF;
-    --wechat-text: #191919;
-    --wechat-text-secondary: #888888;
-    --wechat-border: #E5E5E5;
-    --wechat-link: #576B95;
+    --radius: 0.75rem; /* Slightly more rounded */
   }
 }
 
@@ -52,104 +40,8 @@
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-[#EDEDED] text-[#191919] antialiased;
+    @apply bg-background text-foreground antialiased;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
-
-  /* WeChat-style tap feedback */
-  button, a, [role="button"] {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  button:active, a:active, [role="button"]:active {
-    opacity: 0.7;
-  }
-}
-
-@layer components {
-  /* WeChat-style cell/list item */
-  .wechat-cell {
-    @apply bg-white px-4 py-3 flex items-center active:bg-[#ECECEC] transition-colors;
-  }
-
-  /* WeChat-style section header */
-  .wechat-section-header {
-    @apply px-4 py-2 text-[13px] text-[#888888];
-  }
-
-  /* WeChat-style button */
-  .wechat-btn {
-    @apply h-11 rounded-lg font-medium text-[16px] transition-all active:scale-[0.98];
-  }
-
-  .wechat-btn-primary {
-    @apply wechat-btn bg-[#07C160] text-white hover:bg-[#06AE56];
-  }
-
-  .wechat-btn-secondary {
-    @apply wechat-btn bg-white text-[#07C160] border border-[#07C160];
-  }
-
-  /* WeChat-style input */
-  .wechat-input {
-    @apply h-11 bg-white border-none rounded-lg px-4 text-[16px] placeholder:text-[#B2B2B2] focus:ring-0 focus:outline-none;
-  }
-
-  /* WeChat-style card */
-  .wechat-card {
-    @apply bg-white rounded-xl overflow-hidden;
-  }
-
-  /* WeChat-style badge */
-  .wechat-badge {
-    @apply h-[18px] min-w-[18px] px-1.5 bg-[#FA5151] text-white text-[11px] font-medium rounded-full flex items-center justify-center;
-  }
-}
-
-/* Custom Scrollbar - minimal like WeChat */
-::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-/* Safe area for mobile */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-}
-
-/* Animations */
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out;
-}
-
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
 }
