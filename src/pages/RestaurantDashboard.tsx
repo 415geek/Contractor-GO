@@ -3,186 +3,111 @@
 import React from 'react';
 import AppLayout from '@/components/AppLayout';
 import { 
-  BarChart3, 
+  Activity, 
   TrendingUp, 
   Users, 
   DollarSign, 
-  Clock, 
   ChefHat,
   ShoppingCart,
-  Package,
+  Clock,
+  Star,
   Sparkles
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { RealTimeAnalytics } from '@/components/RealTimeAnalytics';
+import { MultiAgentSystem } from '@/components/MultiAgentSystem';
+import { POSIntegration } from '@/components/POSIntegration';
+import { InventoryManager } from '@/components/InventoryManager';
+import { StaffManager } from '@/components/StaffManager';
+import { AIManager } from '@/components/AIManager';
+import { useAuth } from '@/contexts/AuthContext';
 
 const RestaurantDashboard = () => {
-  const stats = [
-    { label: 'Today\'s Revenue', value: '$2,845', change: '+12%', icon: DollarSign, color: 'text-green-600' },
-    { label: 'Active Orders', value: '12', change: '+2', icon: Clock, color: 'text-blue-600' },
-    { label: 'Customer Satisfaction', value: '94%', change: '+3%', icon: Users, color: 'text-amber-600' },
-    { label: 'Kitchen Efficiency', value: '85%', change: '+5%', icon: ChefHat, color: 'text-purple-600' },
+  const { user } = useAuth();
+
+  const quickStats = [
+    { label: 'Today Revenue', value: '$2,845', change: '+12%', icon: DollarSign, color: 'text-green-600' },
+    { label: 'Active Orders', value: '12', change: '+2', icon: Activity, color: 'text-blue-600' },
+    { label: 'Customer Satisfaction', value: '4.9', change: '+0.2', icon: Star, color: 'text-amber-600' },
+    { label: 'Avg. Wait Time', value: '8 min', change: '-1 min', icon: Clock, color: 'text-purple-600' },
   ];
 
-  const quickActions = [
-    { label: 'View Menu', icon: BarChart3, color: 'bg-blue-500' },
-    { label: 'Manage Staff', icon: Users, color: 'bg-green-500' },
-    { label: 'Check Inventory', icon: Package, color: 'bg-amber-500' },
-    { label: 'Order Supplies', icon: ShoppingCart, color: 'bg-purple-500' },
-  ];
+  const headerRight = (
+    <div className="flex items-center space-x-2">
+      <Button variant="ghost" size="icon" className="text-muted-foreground">
+        <Sparkles className="h-5 w-5" />
+      </Button>
+      <Button variant="ghost" size="icon" className="text-muted-foreground">
+        <Users className="h-5 w-5" />
+      </Button>
+    </div>
+  );
 
   return (
-    <AppLayout title="Restaurant Dashboard">
+    <AppLayout title="Restaurant OS" headerRight={headerRight}>
       <div className="p-4 md:p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* Welcome Header */}
+        <div className="md:flex md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Restaurant Dashboard</h1>
-            <p className="text-muted-foreground">AI-powered restaurant management</p>
+            <p className="text-muted-foreground">Welcome back,</p>
+            <h2 className="text-2xl font-bold text-foreground">Chef Michael</h2>
           </div>
-          <Button className="bg-gradient-to-r from-purple-600 to-indigo-600">
-            <Sparkles className="h-4 w-4 mr-2" />
-            AI Assistant
-          </Button>
+          <div className="hidden md:flex md:space-x-2 md:mt-0 mt-4">
+            <Button variant="outline" size="sm">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              View Reports
+            </Button>
+            <Button size="sm">
+              <Activity className="h-4 w-4 mr-2" />
+              New Order
+            </Button>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat, index) => (
-            <Card key={index} className="border-0 shadow-sm">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {quickStats.map((stat, index) => (
+            <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
-                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                  <div className={`h-8 w-8 ${stat.color} bg-opacity-20 rounded-full flex items-center justify-center`}>
+                    <stat.icon className="h-4 w-4" />
                   </div>
-                  <div className={`h-10 w-10 rounded-lg ${stat.color.replace('text-', 'bg-')} bg-opacity-20 flex items-center justify-center`}>
-                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                  </div>
+                  <Badge variant="secondary" className={
+                    stat.change.startsWith('+') ? 'bg-green-100 text-green-700' :
+                    stat.change.startsWith('-') ? 'bg-red-100 text-red-700' :
+                    'bg-gray-100 text-gray-700'
+                  }>
+                    {stat.change}
+                  </Badge>
                 </div>
-                <div className="flex items-center mt-3">
-                  <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
-                  <span className="text-xs text-green-600">{stat.change}</span>
-                </div>
+                <p className="text-2xl font-bold text-foreground mt-2">{stat.value}</p>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {quickActions.map((action, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="h-24 flex flex-col items-center justify-center p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className={`h-12 w-12 ${action.color} rounded-lg flex items-center justify-center mb-2`}>
-                    <action.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="text-sm font-medium">{action.label}</span>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Real-time Analytics */}
+        <RealTimeAnalytics />
 
-        {/* Performance Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Sales Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Today</span>
-                    <span className="font-semibold">$2,845</span>
-                  </div>
-                  <Progress value={85} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>This Week</span>
-                    <span className="font-semibold">$18,240</span>
-                  </div>
-                  <Progress value={72} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>This Month</span>
-                    <span className="font-semibold">$62,500</span>
-                  </div>
-                  <Progress value={65} className="h-2" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Multi-Agent System */}
+        <MultiAgentSystem />
 
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Top Menu Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[
-                  { name: 'Signature Burger', orders: 128, revenue: '$3,840' },
-                  { name: 'Truffle Fries', orders: 96, revenue: '$2,880' },
-                  { name: 'Craft Cocktails', orders: 84, revenue: '$4,200' },
-                  { name: 'Premium Steak', orders: 52, revenue: '$4,160' },
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 hover:bg-muted rounded-lg">
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">{item.orders} orders</p>
-                    </div>
-                    <Badge variant="secondary">{item.revenue}</Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* POS Integration */}
+        <POSIntegration />
 
-        {/* AI Recommendations */}
-        <Card className="border-0 shadow-sm bg-gradient-to-r from-purple-50 to-indigo-50">
-          <CardHeader>
-            <CardTitle className="flex items-center text-lg">
-              <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
-              AI Recommendations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-start">
-                <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                  <TrendingUp className="h-4 w-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">Promote truffle fries during dinner rush</p>
-                  <p className="text-sm text-muted-foreground">Expected impact: +15% margin on evening sales</p>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <div className="h-8 w-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                  <Package className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">Order beef patties today</p>
-                  <p className="text-sm text-muted-foreground">Stock will run out in 2 days at current usage rate</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Inventory Management */}
+        <InventoryManager />
+
+        {/* Staff Management */}
+        <StaffManager />
+
+        {/* AI Manager Floating Button */}
+        <AIManager />
       </div>
     </AppLayout>
   );
