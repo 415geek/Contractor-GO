@@ -3,17 +3,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { cn } from "@/lib/utils";
 import AppLayout from '@/components/AppLayout';
-import { AIManager } from '@/components/AIManager';
 import { TestSetup } from '@/components/TestSetup';
 import { MultiAgentSystem } from '@/components/MultiAgentSystem';
 import { POSIntegration } from '@/components/POSIntegration';
 import CompetitiveAnalysis from '@/components/CompetitiveAnalysis';
 import { RealTimeAnalytics } from '@/components/RealTimeAnalytics';
+import { InventoryManager } from '@/components/InventoryManager';
+import { StaffManager } from '@/components/StaffManager';
+import { AIManager } from '@/components/AIManager';
 
 const RestaurantDashboard = () => {
   const navigate = useNavigate();
@@ -34,6 +32,8 @@ const RestaurantDashboard = () => {
         <POSIntegration />
         <CompetitiveAnalysis />
         <RealTimeAnalytics />
+        <InventoryManager />
+        <StaffManager />
       </div>
       <AIManager />
     </AppLayout>

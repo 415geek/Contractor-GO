@@ -1,13 +1,134 @@
-// ... existing imports and code ...
+"use client";
+
+import React, { useState } from 'react';
+import { 
+  BarChart3, 
+  TrendingUp, 
+  Target, 
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  Users,
+  Clock,
+  Star
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+
+interface Competitor {
+  id: string;
+  name: string;
+  distance: string;
+  rating: number;
+  priceLevel: number;
+  popularItems: string[];
+  avgWaitTime: number;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  marketShare: number;
+}
+
+interface MarketInsight {
+  id: string;
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  trend: 'up' | 'down' | 'stable';
+}
 
 const CompetitiveAnalysis = () => {
-  // ... existing code ...
+  const [expandedCompetitor, setExpandedCompetitor] = useState<string | null>(null);
+
+  const competitors: Competitor[] = [
+    {
+      id: '1',
+      name: 'Burger Palace',
+      distance: '0.3 mi',
+      rating: 4.7,
+      priceLevel: 2,
+      popularItems: ['Classic Burger', 'Sweet Potato Fries', 'Milkshake'],
+      avgWaitTime: 12,
+      sentiment: 'negative',
+      marketShare: 35
+    },
+    {
+      id: '2',
+      name: 'Grill Masters',
+      distance: '0.5 mi',
+      rating: 4.3,
+      priceLevel: 3,
+      popularItems: ['Premium Burger', 'Truffle Fries', 'Craft Beer'],
+      avgWaitTime: 8,
+      sentiment: 'positive',
+      marketShare: 25
+    },
+    {
+      id: '3',
+      name: 'Quick Bites',
+      distance: '0.2 mi',
+      rating: 4.0,
+      priceLevel: 1,
+      popularItems: ['Value Burger', 'Onion Rings', 'Soda'],
+      avgWaitTime: 5,
+      sentiment: 'neutral',
+      marketShare: 20
+    }
+  ];
+
+  const marketInsights: MarketInsight[] = [
+    {
+      id: '1',
+      title: 'Premium Burger Demand',
+      description: '20% increase in premium burger orders in your area',
+      impact: 'high',
+      trend: 'up'
+    },
+    {
+      id: '2',
+      title: 'Wait Time Sensitivity',
+      description: 'Customers showing 15% higher sensitivity to wait times',
+      impact: 'medium',
+      trend: 'up'
+    },
+    {
+      id: '3',
+      title: 'Plant-based Options',
+      description: 'Growing demand for plant-based alternatives',
+      impact: 'medium',
+      trend: 'up'
+    }
+  ];
+
+  const getSentimentColor = (sentiment: Competitor['sentiment']) => {
+    switch (sentiment) {
+      case 'positive': return 'text-green-600 bg-green-100';
+      case 'negative': return 'text-red-600 bg-red-100';
+      case 'neutral': return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getImpactColor = (impact: MarketInsight['impact']) => {
+    switch (impact) {
+      case 'high': return 'text-red-600 bg-red-100';
+      case 'medium': return 'text-amber-600 bg-amber-100';
+      case 'low': return 'text-green-600 bg-green-100';
+    }
+  };
+
+  const getTrendIcon = (trend: MarketInsight['trend']) => {
+    switch (trend) {
+      case 'up': return <ChevronUp className="h-4 w-4 text-green-600" />;
+      case 'down': return <ChevronDown className="h-4 w-4 text-red-600" />;
+      case 'stable': return <div className="h-4 w-4 text-gray-600">→</div>;
+    }
+  };
 
   return (
     <Card className="border-0 shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center text-lg">
-          <BarChart3 className="h-5 w-5 mr极2 text-purple-600" />
+          <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
           Competitive Analysis
         </CardTitle>
       </CardHeader>
@@ -61,7 +182,7 @@ const CompetitiveAnalysis = () => {
                     >
                       {expandedCompetitor === competitor.id ? 'Hide' : 'Show'} Details
                     </Button>
-                    <Progress value={competitor.market极are} className="w-20 h-2" />
+                    <Progress value={competitor.marketShare} className="w-20 h-2" />
                   </div>
 
                   {expandedCompetitor === competitor.id && (
@@ -118,7 +239,7 @@ const CompetitiveAnalysis = () => {
                   <p className="text-2xl font-bold text-purple-600">20%</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-purple-600/极">Growth</p>
+                  <p className="text-sm text-purple-600/70">Growth</p>
                   <p className="text-lg font-bold text-green-600">+5%</p>
                 </div>
               </div>
