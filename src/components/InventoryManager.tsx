@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
   Package, 
   AlertTriangle, 
   TrendingDown, 
-  Plus,
-  Search,
-  Filter,
-  RefreshCw,
   ShoppingCart,
   Calendar,
   BarChart3
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
 
 interface InventoryItem {
   id: string;
@@ -30,13 +30,9 @@ interface InventoryItem {
   supplier: string;
   lastOrdered: Date;
   status: 'adequate' | 'low' | 'critical';
-  usageRate: number; // units per day
 }
 
-export const InventoryManager = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
+const InventoryManager = () => {
   const inventoryItems: InventoryItem[] = [
     {
       id: '1',
@@ -48,8 +44,7 @@ export const InventoryManager = () => {
       costPerUnit: 2.50,
       supplier: 'Prime Meats Co.',
       lastOrdered: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      status: 'critical',
-      usageRate: 45
+      status: 'critical'
     },
     {
       id: '2',
@@ -61,8 +56,7 @@ export const InventoryManager = () => {
       costPerUnit: 1.20,
       supplier: 'Fresh Farms',
       lastOrdered: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      status: 'low',
-      usageRate: 12
+      status: 'low'
     },
     {
       id: '3',
@@ -74,29 +68,13 @@ export const InventoryManager = () => {
       costPerUnit: 3.80,
       supplier: 'Golden Bakery',
       lastOrdered: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      status: 'adequate',
-      usageRate: 25
-    },
-    {
-      id: '4',
-      name: 'Truffle Oil',
-      category: 'Specialty',
-      currentStock: 2,
-      minStock: 5,
-      unit: 'bottles',
-      costPerUnit: 28.00,
-      supplier: 'Gourmet Imports',
-      lastOrdered: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      status: 'critical',
-      usageRate: 0.5
+      status: 'adequate'
     }
   ];
 
-  const categories = ['all', ...new Set(inventoryItems.map(item => item.category))];
-
-  const filteredItems = inventoryItems.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (selectedCategory === 'all' || item.category === selectedCategory)
+  const criticalItems = inventoryItems.filter(item => item.status === 'critical').length;
+  const totalInventoryValue = inventoryItems.reduce((sum, item) => 
+    sum + (item.currentStock * item.costPerUnit), 0
   );
 
   const getStatusColor = (status: InventoryItem['status']) => {
@@ -107,34 +85,18 @@ export const InventoryManager = () => {
     }
   };
 
-  const getDaysRemaining = (item: InventoryItem) => {
-    return Math.floor(item.currentStock / item.usageRate);
-  };
-
   const getStockPercentage = (item: InventoryItem) => {
-    const bufferStock = item.minStock * 1.5; // 50% buffer
+    const bufferStock = item.minStock * 1.5;
     return Math.min((item.currentStock / bufferStock) * 100, 100);
   };
 
-  const totalInventoryValue = inventoryItems.reduce((sum, item) => 
-    sum + (item.currentStock * item.costPerUnit), 0
-  );
-
-  const criticalItems = inventoryItems.filter(item => item.status === 'critical').length;
-
   return (
     <Card className="border-0 shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle className="flex items-center text-lg">
           <Package className="h-5 w-5 mr-2 text-purple-600" />
           Inventory Management
         </CardTitle>
-        <div className="flex items-center space-x-2">
-          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="h-4 w-4 mr-2" />
-            New Item
-          </Button>
-        </div>
       </CardHeader>
       <CardContent>
         {/* Summary Cards */}
@@ -173,36 +135,9 @@ export const InventoryManager = () => {
           </Card>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex gap-2 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input 
-              placeholder="Search inventory..." 
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <select 
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border rounded-md text-sm"
-          >
-            {categories.map(category => (
-              <option key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </option>
-            ))}
-          </select>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
-
         {/* Inventory List */}
         <div className="space-y-4">
-          {filteredItems.map((item) => (
+          {inventoryItems.map((item) => (
             <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
@@ -233,12 +168,12 @@ export const InventoryManager = () => {
                   <p className="font-semibold">{item.minStock} {item.unit}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Days Remaining</p>
-                  <p className="font-semibold">{getDaysRemaining(item)} days</p>
-                </div>
-                <div>
                   <p className="text-sm text-gray-600">Cost</p>
                   <p className="font-semibold">${item.costPerUnit}/{item.unit}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Value</p>
+                  <p className="font-semibold">${(item.currentStock * item.costPerUnit).toFixed(2)}</p>
                 </div>
               </div>
 
@@ -273,30 +208,9 @@ export const InventoryManager = () => {
             </div>
           ))}
         </div>
-
-        {/* Quick Actions */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg">
-          <h4 className="font-semibold text-purple-600 mb-3">Quick Actions</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button className="bg-white text-purple-600 hover:bg-purple-100 border border-purple-200">
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Bulk Order
-            </Button>
-            <Button className="bg-white text-purple-600 hover:bg-purple-100 border border-purple-200">
-              <Calendar className="h-4 w-4 mr-2" />
-              Schedule
-            </Button>
-            <Button className="bg-white text-purple-600 hover:bg-purple-100 border border-purple-200">
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Reports
-            </Button>
-            <Button className="bg-white text-purple-600 hover:bg-purple-100 border border-purple-200">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
 };
+
+export default InventoryManager;

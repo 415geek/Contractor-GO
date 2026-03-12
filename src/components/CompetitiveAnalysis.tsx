@@ -227,7 +227,7 @@ const CompetitiveAnalysis = () => {
                   <p className="text-2xl font-bold text-purple-600">20%</p>
                 </div>
                 <div className="text-right">
-                  <p className="极text-sm text-purple-600/70">Growth</p>
+                  <p className="text-sm text-purple-600/70">Growth</p>
                   <p className="text-lg font-bold text-green-600">+5%</p>
                 </div>
               </div>

@@ -1,6 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
   Activity, 
   TrendingUp, 
@@ -10,9 +18,6 @@ import {
   ChefHat,
   Sparkles
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 
 interface RealTimeMetric {
   id: string;
@@ -32,8 +37,8 @@ interface LiveOrder {
   value: number;
 }
 
-export const RealTimeAnalytics = () => {
-  const [metrics, setMetrics] = useState<RealTimeMetric[]>([
+const RealTimeAnalytics = () => {
+  const metrics: RealTimeMetric[] = [
     {
       id: '1',
       label: 'Current Orders',
@@ -70,9 +75,9 @@ export const RealTimeAnalytics = () => {
       icon: <Users className="h-4 w-4" />,
       color: 'text-amber-600'
     }
-  ]);
+  ];
 
-  const [liveOrders, setLiveOrders] = useState<LiveOrder[]>([
+  const liveOrders: LiveOrder[] = [
     {
       id: '1001',
       items: ['Signature Burger', 'Truffle Fries'],
@@ -94,24 +99,7 @@ export const RealTimeAnalytics = () => {
       time: 0,
       value: 42
     }
-  ]);
-
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => prev.map(metric => ({
-        ...metric,
-        value: metric.value + (metric.trend === 'up' ? 1 : -1) * Math.random()
-      })));
-
-      setLiveOrders(prev => prev.map(order => ({
-        ...order,
-        time: order.status === 'preparing' ? Math.max(0, order.time - 1) : order.time
-      })));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+  ];
 
   const getTrendIcon = (trend: RealTimeMetric['trend']) => {
     switch (trend) {
@@ -220,3 +208,5 @@ export const RealTimeAnalytics = () => {
     </Card>
   );
 };
+
+export default RealTimeAnalytics;

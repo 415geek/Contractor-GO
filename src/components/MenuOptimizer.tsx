@@ -1,6 +1,15 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { 
   Utensils, 
   TrendingUp, 
@@ -8,16 +17,8 @@ import {
   Star,
   DollarSign,
   Clock,
-  Edit,
-  Plus,
-  Filter,
-  Search
+  Edit
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
 
 interface MenuItem {
   id: string;
@@ -29,14 +30,10 @@ interface MenuItem {
   popularity: number;
   preparationTime: number;
   rating: number;
-  status: 'best-seller' | 'trending' | 'underperforming' | 'new';
-  ingredients: string[];
+  status: 'best-seller' | 'trending' | 'underperforming';
 }
 
-export const MenuOptimizer = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-
+const MenuOptimizer = () => {
   const menuItems: MenuItem[] = [
     {
       id: '1',
@@ -48,8 +45,7 @@ export const MenuOptimizer = () => {
       popularity: 92,
       preparationTime: 12,
       rating: 4.8,
-      status: 'best-seller',
-      ingredients: ['Beef Patty', 'Brioche Bun', 'Lettuce', 'Tomato', 'Special Sauce']
+      status: 'best-seller'
     },
     {
       id: '2',
@@ -61,8 +57,7 @@ export const MenuOptimizer = () => {
       popularity: 88,
       preparationTime: 8,
       rating: 4.6,
-      status: 'trending',
-      ingredients: ['Potatoes', 'Truffle Oil', 'Parmesan', 'Parsley']
+      status: 'trending'
     },
     {
       id: '3',
@@ -74,8 +69,7 @@ export const MenuOptimizer = () => {
       popularity: 85,
       preparationTime: 5,
       rating: 4.7,
-      status: 'best-seller',
-      ingredients: ['Premium Spirit', 'Fresh Juice', 'Herbs', 'Ice']
+      status: 'best-seller'
     },
     {
       id: '4',
@@ -87,24 +81,19 @@ export const MenuOptimizer = () => {
       popularity: 75,
       preparationTime: 10,
       rating: 4.3,
-      status: 'underperforming',
-      ingredients: ['Plant-based Patty', 'Whole Wheat Bun', 'Avocado', 'Sprouts']
+      status: 'underperforming'
     }
   ];
 
-  const categories = ['all', ...new Set(menuItems.map(item => item.category))];
-
-  const filteredItems = menuItems.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    (selectedCategory === 'all' || item.category === selectedCategory)
-  );
+  const bestSellers = menuItems.filter(item => item.status === 'best-seller').length;
+  const totalRevenue = menuItems.reduce((sum, item) => sum + (item.popularity * item.price), 0);
+  const avgMargin = menuItems.reduce((sum, item) => sum + item.margin, 0) / menuItems.length;
 
   const getStatusColor = (status: MenuItem['status']) => {
     switch (status) {
       case 'best-seller': return 'text-green-600 bg-green-100';
       case 'trending': return 'text-blue-600 bg-blue-100';
       case 'underperforming': return 'text-amber-600 bg-amber-100';
-      case 'new': return 'text-purple-600 bg-purple-100';
     }
   };
 
@@ -113,27 +102,16 @@ export const MenuOptimizer = () => {
       case 'best-seller': return <TrendingUp className="h-3 w-3" />;
       case 'trending': return <Star className="h-3 w-3" />;
       case 'underperforming': return <TrendingDown className="h-3 w-3" />;
-      case 'new': return <Plus className="h-3 w-3" />;
     }
   };
 
-  const totalRevenue = menuItems.reduce((sum, item) => sum + (item.popularity * item.price), 0);
-  const avgMargin = menuItems.reduce((sum, item) => sum + item.margin, 0) / menuItems.length;
-  const bestSellers = menuItems.filter(item => item.status === 'best-seller').length;
-
   return (
     <Card className="border-0 shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle className="flex items-center text-lg">
           <Utensils className="h-5 w-5 mr-2 text-purple-600" />
           Menu Optimizer
         </CardTitle>
-        <div className="flex items-center space-x-2">
-          <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="h-4 w-4 mr-2" />
-            New Item
-          </Button>
-        </div>
       </CardHeader>
       <CardContent>
         {/* Summary Cards */}
@@ -172,36 +150,9 @@ export const MenuOptimizer = () => {
           </Card>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex gap-2 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input 
-              placeholder="Search menu items..." 
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <select 
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border rounded-md text-sm"
-          >
-            {categories.map(category => (
-              <option key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </option>
-            ))}
-          </select>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
-
         {/* Menu Items List */}
         <div className="space-y-4">
-          {filteredItems.map((item) => (
+          {menuItems.map((item) => (
             <div key={item.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
@@ -256,20 +207,8 @@ export const MenuOptimizer = () => {
               </div>
 
               <div className="flex justify-between items-center mt-3">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Key Ingredients:</p>
-                  <div className="flex space-x-1">
-                    {item.ingredients.slice(0, 2).map((ingredient, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {ingredient}
-                      </Badge>
-                    ))}
-                    {item.ingredients.length > 2 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{item.ingredients.length - 2}
-                      </Badge>
-                    )}
-                  </div>
+                <div className="text-xs text-gray-500">
+                  Cost: ${item.cost} | Profit: ${(item.price - item.cost).toFixed(2)}
                 </div>
                 <Button variant="outline" size="sm">
                   <Edit className="h-4 w-4 mr-2" />
@@ -279,27 +218,9 @@ export const MenuOptimizer = () => {
             </div>
           ))}
         </div>
-
-        {/* Menu Performance */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg">
-          <h4 className="font-semibold text-purple-600 mb-2">Menu Performance</h4>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-purple-600/70">Overall score</p>
-              <p className="text-2xl font-bold text-purple-600">86%</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-purple-600/70">Optimization potential</p>
-              <p className="text-lg font-bold text-green-600">+18%</p>
-            </div>
-          </div>
-          <Progress value={86} className="mt-2 h-2 bg-purple-200" />
-          <div className="flex justify-between text-xs text-purple-600 mt-1">
-            <span>Efficiency Score</span>
-            <span>86%</span>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
 };
+
+export default MenuOptimizer;
