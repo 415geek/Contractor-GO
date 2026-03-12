@@ -19,11 +19,11 @@ const Logo = ({ size = 'md', className, showText = false }: LogoProps) => {
 
   return (
     <div className={cn("flex flex-col items-center", className)}>
-      <img 
-        src="/logo.jpg" 
-        alt="Builder+" 
-        className={cn(sizeClasses[size], "object-contain")}
-      />
+      <img
+              src="/logo.png"
+              alt="Builder+"
+              className={cn(sizeClasses[size], "object-contain")}
+            />
     </div>
   );
 };
