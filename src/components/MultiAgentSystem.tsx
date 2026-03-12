@@ -2,14 +2,6 @@
 
 import React from 'react';
 import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
   Brain, 
   Users, 
   TrendingUp, 
@@ -18,6 +10,9 @@ import {
   Clock,
   DollarSign
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface Agent {
   id: string;
@@ -29,7 +24,7 @@ interface Agent {
   icon: React.ReactNode;
 }
 
-const MultiAgentSystem = () => {
+export const MultiAgentSystem = () => {
   const agents: Agent[] = [
     {
       id: '1',
@@ -137,5 +132,3 @@ const MultiAgentSystem = () => {
     </Card>
   );
 };
-
-export default MultiAgentSystem;

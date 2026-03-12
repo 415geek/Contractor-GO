@@ -36,7 +36,7 @@ interface Suggestion {
   parameters?: any;
 }
 
-const AIManager = () => {
+export const AIManager = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -225,5 +225,3 @@ const AIManager = () => {
     </div>
   );
 };
-
-export default AIManager;
