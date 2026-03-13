@@ -21,6 +21,7 @@ import Accounting from "./pages/Accounting";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import TestAPI from "./pages/TestAPI";
 import Tools from "./pages/Tools";
 import VirtualNumbers from "./pages/VirtualNumbers";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -49,6 +50,7 @@ const AppRoutes = () => {
       <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
       <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/register" element={session ? <Navigate to="/dashboard" replace /> : <Register />} />
+      <Route path="/test-api" element={<TestAPI />} />
       
       {/* Protected routes */}
       <Route element={<ProtectedRoute />}>

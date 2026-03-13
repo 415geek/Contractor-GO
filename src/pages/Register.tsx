@@ -39,6 +39,8 @@ const Register = () => {
     setError('');
     setLoading(true);
 
+    console.log('[Register] Starting registration...');
+
     try {
       if (!formData.phone && !formData.email) {
         setError('请输入手机号或邮箱');
@@ -64,7 +66,14 @@ const Register = () => {
         return;
       }
 
-      await register({
+      console.log('[Register] Calling register API...', {
+        phone: formData.phone,
+        email: formData.email,
+        role,
+        display_name: formData.display_name,
+      });
+
+      const result = await register({
         phone: formData.phone || undefined,
         email: formData.email || undefined,
         password: formData.password,
@@ -74,8 +83,10 @@ const Register = () => {
         interface_language: formData.interface_language,
       });
 
+      console.log('[Register] Registration successful:', result);
       navigate('/dashboard');
     } catch (err: any) {
+      console.error('[Register] Registration error:', err);
       setError(err.message || '注册失败，请稍后重试');
     } finally {
       setLoading(false);
@@ -244,8 +255,11 @@ const Register = () => {
             <CardFooter className="flex flex-col space-y-4">
               <Button 
                 type="submit" 
-                className="w-full h-12 bg-contractor-gradient hover:opacity-90 transition-opacity"
+                className="w-full h-12 bg-gradient-to-r from-primary to-primary-dark hover:opacity-90 transition-opacity"
                 disabled={loading}
+                onClick={(e) => {
+                  console.log('[Register] Button clicked');
+                }}
               >
                 {loading ? '注册中...' : '注册'}
               </Button>

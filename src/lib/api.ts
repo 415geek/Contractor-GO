@@ -38,16 +38,21 @@ const request = async (
 
   const url = `${API_BASE_URL}/functions/v1${endpoint}`;
 
+  console.log(`[API] Request: ${options.method || 'GET'} ${url}`);
+
   try {
     const response = await fetch(url, {
       ...options,
       headers,
     });
 
+    console.log(`[API] Response status: ${response.status}`);
+
     const data = await response.json();
+    console.log(`[API] Response data:`, data);
 
     if (!response.ok) {
-      throw new Error(data.error || 'Request failed');
+      throw new Error(data.error || data.details || 'Request failed');
     }
 
     return data;
