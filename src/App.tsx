@@ -20,8 +20,11 @@ import Moments from "./pages/Moments";
 import Accounting from "./pages/Accounting";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import Tools from "./pages/Tools";
+import VirtualNumbers from "./pages/VirtualNumbers";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { LanguageProvider } from "./contexts/LanguageContext";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +63,8 @@ const AppRoutes = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/moments" element={<Moments />} />
         <Route path="/accounting" element={<Accounting />} />
+        <Route path="/tools" element={<Tools />} />
+        <Route path="/virtual-numbers" element={<VirtualNumbers />} />
       </Route>
       
       <Route path="*" element={<NotFound />} />
@@ -74,9 +79,11 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </LanguageProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

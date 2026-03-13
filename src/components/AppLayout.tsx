@@ -3,17 +3,21 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutGrid,
-  Users, 
-  Compass, 
-  User
+  LayoutDashboard,
+  MessageSquare,
+  Folder,
+  Wrench,
+  User,
+  Bell
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const navItems = [
-  { name: '仪表盘', href: '/dashboard', icon: LayoutGrid },
-  { name: '客户', href: '/clients', icon: Users },
-  { name: '发现', href: '/discover', icon: Compass },
+  { name: '首页', href: '/dashboard', icon: LayoutDashboard },
+  { name: '消息', href: '/messages', icon: MessageSquare, badge: 2 },
+  { name: '项目', href: '/projects', icon: Folder },
+  { name: '工具', href: '/tools', icon: Wrench },
   { name: '我的', href: '/profile', icon: User },
 ];
 
@@ -31,8 +35,8 @@ const AppLayout = ({ children, title, showHeader = true, headerRight }: AppLayou
     <div className="min-h-screen bg-background flex flex-col mx-auto relative md:shadow-2xl md:max-w-md">
       {/* Header */}
       {showHeader && (
-        <header className="h-14 bg-background flex items-center justify-between px-4 sticky top-0 z-50 border-b">
-          <h1 className="text-lg font-bold text-foreground">{title || 'Builder+'}</h1>
+        <header className="h-14 md:h-16 bg-background flex items-center justify-between px-4 sticky top-0 z-50 border-b">
+          <h1 className="text-lg md:text-xl font-bold text-foreground">{title || 'ContractorLink'}</h1>
           {headerRight && (
             <div className="flex items-center space-x-2">
               {headerRight}
@@ -55,17 +59,24 @@ const AppLayout = ({ children, title, showHeader = true, headerRight }: AppLayou
             <Link
               key={item.name}
               to={item.href}
-              className="flex flex-col items-center justify-center w-full h-full text-muted-foreground hover:text-primary transition-colors"
+              className="flex flex-col items-center justify-center w-full h-full text-muted-foreground hover:text-primary transition-colors relative"
             >
-              <item.icon 
-                className={cn(
-                  "h-6 w-6 mb-1",
-                  isActive ? "text-primary" : ""
-                )} 
-                strokeWidth={isActive ? 2.5 : 2}
-              />
+              <div className="relative">
+                <item.icon 
+                  className={cn(
+                    "h-6 w-6 mb-1 transition-all",
+                    isActive ? "text-primary" : ""
+                  )} 
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
+                {item.badge && (
+                  <Badge className="absolute -top-1 -right-2 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
+                    {item.badge}
+                  </Badge>
+                )}
+              </div>
               <span className={cn(
-                "text-xs font-medium",
+                "text-xs font-medium transition-all",
                 isActive ? "text-primary" : ""
               )}>
                 {item.name}
@@ -77,7 +88,7 @@ const AppLayout = ({ children, title, showHeader = true, headerRight }: AppLayou
 
       {/* Sidebar Navigation - Desktop Only */}
       <aside className="hidden md:flex md:w-64 md:fixed md:left-0 md:top-0 md:h-screen md:bg-card md:border-r md:flex-col md:pt-20">
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href || 
               (item.href === '/dashboard' && location.pathname === '/');
@@ -86,13 +97,20 @@ const AppLayout = ({ children, title, showHeader = true, headerRight }: AppLayou
                 key={item.name}
                 to={item.href}
                 className={cn(
-                  "flex items-center px-4 py-3 mx-2 my-1 rounded-lg transition-colors",
+                  "flex items-center px-4 py-3 mx-2 my-1 rounded-lg transition-all",
                   isActive 
-                    ? "bg-primary text-primary-foreground" 
+                    ? "bg-primary text-primary-foreground shadow-md" 
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 )}
               >
-                <item.icon className="h-5 w-5 mr-3" />
+                <div className="relative">
+                  <item.icon className="h-5 w-5 mr-3" />
+                  {item.badge && (
+                    <Badge className="absolute -top-1 -right-2 h-4 w-4 flex items-center justify-center p-0 bg-primary text-primary-foreground text-[10px]">
+                      {item.badge}
+                    </Badge>
+                  )}
+                </div>
                 <span className="font-medium">{item.name}</span>
               </Link>
             );
