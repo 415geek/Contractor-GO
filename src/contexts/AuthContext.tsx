@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '@/lib/api';
+import { register, login, logout, getCurrentUser, getToken } from '@/lib/supabaseAuth';
 import { websocketManager } from '@/lib/websocket';
 
 interface User {
@@ -44,13 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Check for existing session
     const checkSession = async () => {
-      const token = authAPI.getCurrentUser();
+      const token = getToken();
       if (token) {
-        // In production, validate token with backend
-        // For now, use stored user data
-        const storedUser = localStorage.getItem('user_data');
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
+        const userData = getCurrentUser();
+        if (userData) {
           setUser(userData);
           setSession(token);
           
@@ -75,14 +72,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (data: { phone?: string; email?: string; password: string }) => {
+  const handleLogin = async (data: { phone?: string; email?: string; password: string }) => {
     try {
-      const result = await authAPI.login(data);
+      const result = await login(data);
       
       if (result.user) {
         setUser(result.user);
         setSession(result.token);
-        localStorage.setItem('user_data', JSON.stringify(result.user));
         
         // Connect to WebSocket
         try {
@@ -98,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (data: {
+  const handleRegister = async (data: {
     phone?: string;
     email?: string;
     password: string;
@@ -108,12 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     interface_language?: string;
   }) => {
     try {
-      const result = await authAPI.register(data);
+      const result = await register(data);
       
       if (result.user) {
         setUser(result.user);
         setSession(result.token);
-        localStorage.setItem('user_data', JSON.stringify(result.user));
         
         // Connect to WebSocket
         try {
@@ -129,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
+  const handleLogout = async () => {
     // Set offline status before disconnecting
     if (user) {
       try {
@@ -143,19 +138,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     websocketManager.disconnect();
     
     // Clear auth data
-    authAPI.logout();
+    logout();
     setUser(null);
     setSession(null);
-    localStorage.removeItem('user_data');
   };
 
   const value: AuthContextType = {
     user,
     session,
     loading,
-    login,
-    register,
-    logout,
+    login: handleLogin,
+    register: handleRegister,
+    logout: handleLogout,
     isAuthenticated: !!user,
   };
 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { authAPI } from '@/lib/api';
+import { register, login, logout, getCurrentUser } from '@/lib/supabaseAuth';
 
 const TestAPI = () => {
   const [phone, setPhone] = useState('+14155550123');
@@ -20,7 +20,7 @@ const TestAPI = () => {
 
     try {
       console.log('[TestAPI] Testing registration...');
-      const data = await authAPI.register({
+      const data = await register({
         phone,
         password,
         role: 'contractor',
@@ -43,7 +43,7 @@ const TestAPI = () => {
 
     try {
       console.log('[TestAPI] Testing login...');
-      const data = await authAPI.login({
+      const data = await login({
         phone,
         password,
       });
@@ -57,11 +57,21 @@ const TestAPI = () => {
     }
   };
 
+  const testGetCurrentUser = () => {
+    const user = getCurrentUser();
+    setResult({ currentUser: user });
+  };
+
+  const testLogout = () => {
+    logout();
+    setResult({ message: 'Logged out successfully' });
+  };
+
   return (
     <div className="min-h-screen bg-background p-8">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>API 测试页面</CardTitle>
+          <CardTitle>认证测试页面 (使用 Supabase 客户端)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -81,12 +91,18 @@ const TestAPI = () => {
               placeholder="password123"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={testRegister} disabled={loading}>
               {loading ? '测试中...' : '测试注册'}
             </Button>
             <Button onClick={testLogin} disabled={loading} variant="outline">
               {loading ? '测试中...' : '测试登录'}
+            </Button>
+            <Button onClick={testGetCurrentUser} variant="outline">
+              获取当前用户
+            </Button>
+            <Button onClick={testLogout} variant="destructive">
+              登出
             </Button>
           </div>
 
@@ -99,7 +115,7 @@ const TestAPI = () => {
 
           {result && (
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-700 font-medium">成功:</p>
+              <p className="text-green-700 font-medium">结果:</p>
               <pre className="text-green-600 text-sm overflow-auto">
                 {JSON.stringify(result, null, 2)}
               </pre>

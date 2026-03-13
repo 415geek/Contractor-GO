@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Check API Base URL</h2>
+        <p>API Base URL: <strong id="api-url"></strong></p>
+        <button onclick="testConnection()">Test Connection</button>
+        <div id="connection-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Test Register API</h2>
+        <button onclick="testRegister()">Test Register</button>
+        <div id="register-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Test Login API</h2>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://gkcjbcrjnjfibxbxubge.supabase.co';
+        
+        document.getElementById('api-url').textContent = API_BASE_URL;
+
+        async function testConnection() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.innerHTML = '<p>Testing connection...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/functions/v1/auth-register`, {
+                    method: 'OPTIONS',
+                });
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p><strong>✓ Connection successful!</strong></p>
+                        <p>Status: ${response.status}</p>
+                        <p>CORS Headers: ${response.headers.get('Access-Control-Allow-Origin')}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p><strong>✗ Connection failed!</strong></p>
+                        <p>Error: ${error.message}</p>
+                        <p>Possible causes:</p>
+                        <ul>
+                            <li>Edge Functions not deployed</li>
+                            <li>Incorrect API URL</li>
+                            <li>Network/CORS issues</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        async function testRegister() {
+            const resultDiv = document.getElementById('register-result');
+            resultDiv.innerHTML = '<p>Testing register...</p>';
+            
+            const testData = {
+                phone: '+14155550123',
+                password: 'password123',
+                role: 'contractor',
+                display_name: 'Test User',
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/functions/v1/auth-register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <p><strong>✓ Register successful!</strong></p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <p><strong>✗ Register failed!</strong></p>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p><strong>✗ Request failed!</strong></p>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            resultDiv.innerHTML = '<p>Testing login...</p>';
+            
+            const testData = {
+                phone: '+14155550123',
+                password: 'password123',
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/functions/v1/auth-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData),
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <p><strong>✓ Login successful!</strong></p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <p><strong>✗ Login failed!</strong></p>
+                            <p>Status: ${response.status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p><strong>✗ Request failed!</strong></p>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
