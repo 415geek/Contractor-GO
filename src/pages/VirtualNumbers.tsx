@@ -1,38 +1,71 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
 import { 
   Smartphone, Plus, ArrowRight, CheckCircle, AlertCircle,
   MessageSquare, CreditCard, ChevronRight, Info, Settings,
-  Shield, Globe, Zap
+  Shield, Globe, Zap, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { numberPlans, popularAreaCodes } from '@/lib/design-system';
-
-// 模拟数据
-const myNumbers = [
-  {
-    id: '1',
-    phoneNumber: '(415) 555-0123',
-    status: 'active',
-    planType: 'professional',
-    monthlyCost: 15,
-    messagesThisMonth: 127,
-    nextBillingDate: '2024-04-15',
-    autoRenew: true,
-  },
-];
+import { virtualNumbersAPI } from '@/lib/api';
 
 const VirtualNumbers = () => {
   const navigate = useNavigate();
   const [showPurchaseFlow, setShowPurchaseFlow] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('professional');
+  const [myNumbers, setMyNumbers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(false);
+  const [error, setError] = useState('');
+
+  // Load virtual numbers
+  useEffect(() => {
+    loadNumbers();
+  }, []);
+
+  const loadNumbers = async () => {
+    try {
+      setLoading(true);
+      const result = await virtualNumbersAPI.getNumbers();
+      setMyNumbers(result.virtual_numbers || []);
+    } catch (err: any) {
+      console.error('Failed to load numbers:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePurchase = async () => {
+    try {
+      setPurchasing(true);
+      setError('');
+
+      // Simulate phone number selection (in real app, this would come from Telnyx)
+      const phoneNumber = `(415) 555-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      await virtualNumbersAPI.purchaseNumber({
+        phone_number: phoneNumber,
+        area_code: '415',
+        plan_type: selectedPlan as 'basic' | 'professional',
+      });
+
+      setShowPurchaseFlow(false);
+      loadNumbers();
+    } catch (err: any) {
+      setError(err.message || '购买失败，请稍后重试');
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -53,11 +86,23 @@ const VirtualNumbers = () => {
   return (
     <AppLayout title="虚拟号码">
       <div className="p-4 md:p-6 space-y-6">
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         {/* My Numbers Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">我的号码</h2>
           
-          {myNumbers.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : myNumbers.length === 0 ? (
             <Card className="border-dashed border-2">
               <CardContent className="p-8 text-center">
                 <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
@@ -84,10 +129,10 @@ const VirtualNumbers = () => {
                           <Smartphone className="h-6 w-6 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-bold">{number.phoneNumber}</h3>
+                          <h3 className="text-xl font-bold">{number.phone_number}</h3>
                           <div className="flex items-center gap-2 mt-1">
                             {getStatusBadge(number.status)}
-                            <Badge variant="outline">{getPlanName(number.planType)}</Badge>
+                            <Badge variant="outline">{getPlanName(number.plan_type)}</Badge>
                           </div>
                         </div>
                       </div>
@@ -99,11 +144,11 @@ const VirtualNumbers = () => {
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
                         <p className="text-sm text-muted-foreground">本月消息</p>
-                        <p className="text-lg font-semibold">{number.messagesThisMonth} 条</p>
+                        <p className="text-lg font-semibold">{number.messages_sent_this_month + number.messages_received_this_month} 条</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">下次续费</p>
-                        <p className="text-lg font-semibold">{number.nextBillingDate}</p>
+                        <p className="text-lg font-semibold">{number.next_billing_date}</p>
                       </div>
                     </div>
 
@@ -296,13 +341,20 @@ const VirtualNumbers = () => {
 
                 <Button 
                   className="w-full h-12 text-base"
-                  onClick={() => {
-                    // TODO: Implement purchase flow
-                    alert('购买功能即将上线');
-                  }}
+                  onClick={handlePurchase}
+                  disabled={purchasing}
                 >
-                  确认购买
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  {purchasing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      购买中...
+                    </>
+                  ) : (
+                    <>
+                      确认购买
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>

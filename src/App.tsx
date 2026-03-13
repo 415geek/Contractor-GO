@@ -20,6 +20,7 @@ import Moments from "./pages/Moments";
 import Accounting from "./pages/Accounting";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Tools from "./pages/Tools";
 import VirtualNumbers from "./pages/VirtualNumbers";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -47,6 +48,7 @@ const AppRoutes = () => {
       {/* Public routes */}
       <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
       <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/register" element={session ? <Navigate to="/dashboard" replace /> : <Register />} />
       
       {/* Protected routes */}
       <Route element={<ProtectedRoute />}>

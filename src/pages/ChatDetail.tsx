@@ -4,7 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ChevronLeft, MoreHorizontal, Send, Paperclip, Mic, Phone, 
-  Video, Info, Globe, Copy, Reply, Trash2, ChevronDown, ChevronUp
+  Video, Info, Globe, Copy, Reply, Trash2, ChevronDown, ChevronUp,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,21 +18,67 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { messagesAPI } from '@/lib/api';
+import { useMessagesWebSocket } from '@/hooks/useWebSocket';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ChatDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [input, setInput] = useState('');
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // WebSocket hooks
+  const { newMessage, messageRead, typingUsers, sendTypingStatus } = useMessagesWebSocket(id);
+
+  // 加载消息
+  useEffect(() => {
+    loadMessages();
+  }, [id]);
+
+  // 处理新消息
+  useEffect(() => {
+    if (newMessage) {
+      setMessages(prev => [...prev, newMessage]);
+      scrollToBottom();
+    }
+  }, [newMessage]);
+
+  // 处理消息已读
+  useEffect(() => {
+    if (messageRead) {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageRead.message_id 
+            ? { ...msg, status: 'read', read_at: messageRead.read_at }
+            : msg
+        )
+      );
+    }
+  }, [messageRead]);
+
+  const loadMessages = async () => {
+    try {
+      setLoading(true);
+      const result = await messagesAPI.getMessages(id);
+      setMessages(result.messages || []);
+      scrollToBottom();
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, []);
 
   const toggleMessageExpand = (msgId: number) => {
     setExpandedMessages(prev => {
@@ -45,44 +92,44 @@ const ChatDetail = () => {
     });
   };
 
-  const messages = [
-    { 
-      id: 1, 
-      sender: 'client', 
-      text: "Hi, when can you start the kitchen renovation?", 
-      translated: "你好，你什么时候可以开始厨房装修？", 
-      time: "10:00 AM",
-      languageFrom: '🇺🇸',
-      languageTo: '🇨🇳',
-    },
-    { 
-      id: 2, 
-      sender: 'me', 
-      text: "明天早上九点，我会带两个工人过去。", 
-      translated: "I will be there tomorrow at 9:00 AM with two workers.", 
-      time: "10:05 AM",
-      languageFrom: '🇨🇳',
-      languageTo: '🇺🇸',
-    },
-    { 
-      id: 3, 
-      sender: 'client', 
-      text: "Great. Please make sure to cover the floor.", 
-      translated: "太好了。请务必把地板遮盖好。", 
-      time: "10:06 AM",
-      languageFrom: '🇺🇸',
-      languageTo: '🇨🇳',
-    },
-    { 
-      id: 4, 
-      sender: 'me', 
-      text: "没问题，我们会做好防护措施的。", 
-      translated: "No problem, we will take proper protective measures.", 
-      time: "10:08 AM",
-      languageFrom: '🇨🇳',
-      languageTo: '🇺🇸',
-    },
-  ];
+  const handleSendMessage = async () => {
+    if (!input.trim() || sending) return;
+
+    try {
+      setSending(true);
+      const result = await messagesAPI.sendMessage({
+        conversation_id: id!,
+        content: input.trim(),
+        type: 'text',
+      });
+
+      setMessages(prev => [...prev, result.message]);
+      setInput('');
+      scrollToBottom();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setSending(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    // 发送输入状态
+    sendTypingStatus(true);
+  };
+
+  // 停止输入状态
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (input.trim() === '') {
+        sendTypingStatus(false);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [input, sendTypingStatus]);
 
   const currentChat = chats.find(chat => chat.id === id);
 
@@ -137,7 +184,9 @@ const ChatDetail = () => {
                   🇺🇸 → 🇨🇳
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground">在线</p>
+              <p className="text-xs text-muted-foreground">
+                {typingUsers.size > 0 ? '正在输入...' : '在线'}
+              </p>
             </div>
           </div>
           <div className="flex items-center space-x-1 md:space-x-2">
@@ -173,64 +222,77 @@ const ChatDetail = () => {
 
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 md:p-6">
-          {messages.map((msg) => {
-            const isExpanded = expandedMessages.has(msg.id);
-            const isMe = msg.sender === 'me';
-            
-            return (
-              <div key={msg.id} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
-                <div className={cn("max-w-[85%] md:max-w-[70%]", isMe ? "ml-auto" : "")}>
-                  {/* Message Bubble */}
-                  <div className={cn(
-                    "px-4 py-3 rounded-2xl",
-                    isMe 
-                      ? "message-bubble-sent text-white" 
-                      : "message-bubble-received text-foreground"
-                  )}>
-                    <p className="text-sm md:text-base leading-relaxed">{msg.text}</p>
-                  </div>
-                  
-                  {/* Translation Section */}
-                  <div 
-                    className={cn(
-                      "mt-1 px-3 py-2 rounded-xl transition-all",
-                      isMe ? "bg-primary/5" : "message-bubble-translated"
-                    )}
-                  >
-                    <div 
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => toggleMessageExpand(msg.id)}
-                    >
-                      <Globe className="h-3 w-3 text-primary" />
-                      <span className="text-xs font-medium text-primary">AI翻译</span>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <span>{msg.languageFrom}</span>
-                        <span>→</span>
-                        <span>{msg.languageTo}</span>
-                      </div>
-                      {isExpanded ? (
-                        <ChevronUp className="h-3 w-3 text-muted-foreground ml-auto" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3 text-muted-foreground ml-auto" />
-                      )}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isExpanded = expandedMessages.has(msg.id);
+              const isMe = msg.sender_id === user?.id;
+              
+              return (
+                <div key={msg.id} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
+                  <div className={cn("max-w-[85%] md:max-w-[70%]", isMe ? "ml-auto" : "")}>
+                    {/* Message Bubble */}
+                    <div className={cn(
+                      "px-4 py-3 rounded-2xl",
+                      isMe 
+                        ? "message-bubble-sent text-white" 
+                        : "message-bubble-received text-foreground"
+                    )}>
+                      <p className="text-sm md:text-base leading-relaxed">{msg.content_original}</p>
                     </div>
                     
-                    <p className={cn(
-                      "text-sm mt-1 text-muted-foreground",
-                      !isExpanded && "truncate"
-                    )}>
-                      {msg.translated}
-                    </p>
+                    {/* Translation Section */}
+                    {msg.content_translated && msg.content_translated !== msg.content_original && (
+                      <div 
+                        className={cn(
+                          "mt-1 px-3 py-2 rounded-xl transition-all",
+                          isMe ? "bg-primary/5" : "message-bubble-translated"
+                        )}
+                      >
+                        <div 
+                          className="flex items-center gap-2 cursor-pointer"
+                          onClick={() => toggleMessageExpand(msg.id)}
+                        >
+                          <Globe className="h-3 w-3 text-primary" />
+                          <span className="text-xs font-medium text-primary">AI翻译</span>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <span>{msg.original_language}</span>
+                            <span>→</span>
+                            <span>{msg.target_language}</span>
+                          </div>
+                          {isExpanded ? (
+                            <ChevronUp className="h-3 w-3 text-muted-foreground ml-auto" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3 text-muted-foreground ml-auto" />
+                          )}
+                        </div>
+                        
+                        <p className={cn(
+                          "text-sm mt-1 text-muted-foreground",
+                          !isExpanded && "truncate"
+                        )}>
+                          {msg.content_translated}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Time */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {isMe && msg.status === 'read' && (
+                        <span className="text-xs text-primary">已读</span>
+                      )}
+                    </div>
                   </div>
-                  
-                  {/* Time */}
-                  <p className="text-xs text-muted-foreground mt-1 text-right">
-                    {msg.time}
-                  </p>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -283,14 +345,14 @@ const ChatDetail = () => {
             </Button>
             
             <Input 
+              ref={inputRef}
               placeholder="输入消息..."
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleInputChange}
               className="flex-1 h-10"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && input.trim()) {
-                  // TODO: Send message
-                  setInput('');
+                  handleSendMessage();
                 }
               }}
             />
@@ -298,13 +360,14 @@ const ChatDetail = () => {
             <Button 
               size="icon" 
               className="h-10 w-10"
-              disabled={!input.trim()}
-              onClick={() => {
-                // TODO: Send message
-                setInput('');
-              }}
+              disabled={!input.trim() || sending}
+              onClick={handleSendMessage}
             >
-              <Send className="h-5 w-5" />
+              {sending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
