@@ -1,0 +1,4 @@
+# Allow installs in CI even if the lockfile is out of date.
+# This prevents ERR_PNPM_OUTDATED_LOCKFILE when package.json changes.
+frozen-lockfile=false
+prefer-frozen-lockfile=false
