@@ -73,7 +73,7 @@ const request = async (
   return data;
 };
 
-// 公共请求函数（不带 token，避免 Clerk 切换后 token 影响 Supabase Functions）
+// Public request helper (no Authorization header by default)
 const requestPublic = async (
   endpoint: string,
   options: RequestInit = {}
@@ -112,18 +112,38 @@ const requestPublic = async (
 // =============================================
 
 export const numbersAPI = {
-  search: async (params: { areaCode?: string; state?: string; ratecenter?: string }) => {
+  list: async (clerkToken: string) => {
+    return requestPublic('/numbers-list', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${clerkToken}`,
+      },
+    });
+  },
+
+  search: async (params: { areaCode?: string; state?: string; ratecenter?: string }, clerkToken: string) => {
     const qs = new URLSearchParams();
     if (params.areaCode) qs.set('areaCode', params.areaCode);
     if (params.state) qs.set('state', params.state);
     if (params.ratecenter) qs.set('ratecenter', params.ratecenter);
 
-    return requestPublic(`/numbers-search?${qs.toString()}`);
+    return requestPublic(`/numbers-search?${qs.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${clerkToken}`,
+      },
+    });
   },
 
-  purchase: async (data: { did: string; planType?: 'BASIC' | 'PRO' | 'BUSINESS'; packageName?: string; email?: string }) => {
+  purchase: async (
+    data: { did: string; planType?: 'BASIC' | 'PRO' | 'BUSINESS'; packageName?: string; email?: string },
+    clerkToken: string,
+  ) => {
     return requestPublic('/numbers-purchase', {
       method: 'POST',
+      headers: {
+        Authorization: `Bearer ${clerkToken}`,
+      },
       body: JSON.stringify(data),
     });
   },

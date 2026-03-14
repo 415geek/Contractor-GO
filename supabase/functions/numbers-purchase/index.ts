@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import { VoIPMSClient } from "../_shared/voipms/client.ts"
+import { verifyClerkAuthHeader } from "../_shared/clerk/verify.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +17,12 @@ function randomBase32(len: number) {
   return out
 }
 
+function addMonths(date: Date, months: number) {
+  const d = new Date(date)
+  d.setMonth(d.getMonth() + months)
+  return d
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -27,6 +35,9 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    const claims = await verifyClerkAuthHeader(req.headers.get('Authorization'))
+    const clerkUserId = claims.sub
 
     const username = Deno.env.get('VOIPMS_USERNAME') ?? ''
     const apiPassword = Deno.env.get('VOIPMS_API_PASSWORD') ?? ''
@@ -84,6 +95,47 @@ serve(async (req) => {
       }
     }
 
+    // Persist to DB using service role (bypass RLS)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+
+    const { data: identity, error: upsertErr } = await supabase
+      .from('clerk_users')
+      .upsert({ clerk_user_id: clerkUserId }, { onConflict: 'clerk_user_id' })
+      .select('id')
+      .single()
+
+    if (upsertErr) {
+      throw upsertErr
+    }
+
+    const areaDigits = purchase.did.replace(/\D/g, '').replace(/^1/, '').slice(0, 3)
+
+    const plan = planType === 'BASIC' ? 'basic' : 'professional'
+
+    const { data: vn, error: insertErr } = await supabase
+      .from('virtual_numbers')
+      .insert({
+        user_id: identity.id,
+        phone_number: purchase.did,
+        area_code: areaDigits,
+        country_code: '+1',
+        provider: 'voipms',
+        provider_number_id: purchase.orderId ?? null,
+        plan_type: plan,
+        status: 'active',
+        monthly_cost: purchase.monthlyFee ?? (planType === 'BASIC' ? 5.99 : 14.99),
+        next_billing_date: addMonths(new Date(), 1).toISOString().slice(0, 10),
+      })
+      .select('*')
+      .single()
+
+    if (insertErr) {
+      throw insertErr
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -91,6 +143,7 @@ serve(async (req) => {
           subAccount: sub,
           purchase,
           packageName: resolvedPackage,
+          virtualNumber: vn,
         },
       }),
       {
@@ -100,8 +153,10 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('[numbers-purchase] Error', error)
-    return new Response(JSON.stringify({ error: (error as any)?.message || 'Internal server error' }), {
-      status: 500,
+    const msg = (error as any)?.message || 'Internal server error'
+    const status = msg === 'Unauthorized' ? 401 : 500
+    return new Response(JSON.stringify({ error: msg }), {
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }

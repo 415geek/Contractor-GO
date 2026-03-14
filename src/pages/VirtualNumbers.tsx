@@ -1,24 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Smartphone, Plus, ArrowRight, CheckCircle, AlertCircle,
+import {
+  Smartphone, Plus, CheckCircle, AlertCircle,
   MessageSquare, CreditCard, ChevronRight, Info, Settings,
-  Shield, Globe, Zap, Loader2
+  Shield, Globe, Zap, Loader2, Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { numberPlans, popularAreaCodes } from '@/lib/design-system';
-import { virtualNumbersAPI } from '@/lib/api';
+import { numbersAPI } from '@/lib/api';
+import { useUser, useAuth } from '@clerk/clerk-react';
 
 const VirtualNumbers = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
+  const { getToken } = useAuth();
+
   const [showPurchaseFlow, setShowPurchaseFlow] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string>('professional');
   const [myNumbers, setMyNumbers] = useState<any[]>([]);
@@ -26,16 +29,36 @@ const VirtualNumbers = () => {
   const [purchasing, setPurchasing] = useState(false);
   const [error, setError] = useState('');
 
+  const [areaCode, setAreaCode] = useState('415');
+  const [availableNumbers, setAvailableNumbers] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedDid, setSelectedDid] = useState<string | null>(null);
+
+  const planTypeForPurchase = useMemo(() => {
+    if (selectedPlan === 'basic') return 'BASIC' as const;
+    // Map professional -> PRO (business not exposed in current UI)
+    return 'PRO' as const;
+  }, [selectedPlan]);
+
   // Load virtual numbers
   useEffect(() => {
     loadNumbers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadNumbers = async () => {
     try {
       setLoading(true);
-      const result = await virtualNumbersAPI.getNumbers();
-      setMyNumbers(result.virtual_numbers || []);
+      setError('');
+
+      const token = await getToken();
+      if (!token) {
+        setMyNumbers([]);
+        return;
+      }
+
+      const result = await numbersAPI.list(token);
+      setMyNumbers(result.data?.virtual_numbers || []);
     } catch (err: any) {
       console.error('Failed to load numbers:', err);
       setError(err.message);
@@ -44,22 +67,59 @@ const VirtualNumbers = () => {
     }
   };
 
+  const searchNumbers = async () => {
+    try {
+      setSearching(true);
+      setError('');
+      setAvailableNumbers([]);
+      setSelectedDid(null);
+
+      const token = await getToken();
+      if (!token) {
+        setError('请先登录');
+        return;
+      }
+
+      const res = await numbersAPI.search({ areaCode }, token);
+      setAvailableNumbers(res.data?.numbers || []);
+    } catch (err: any) {
+      setError(err.message || '搜索失败，请稍后重试');
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const handlePurchase = async () => {
     try {
+      if (!selectedDid) {
+        setError('请选择一个号码');
+        return;
+      }
+
       setPurchasing(true);
       setError('');
 
-      // Simulate phone number selection (in real app, this would come from Telnyx)
-      const phoneNumber = `(415) 555-${Math.floor(1000 + Math.random() * 9000)}`;
+      const token = await getToken();
+      if (!token) {
+        setError('请先登录');
+        return;
+      }
 
-      await virtualNumbersAPI.purchaseNumber({
-        phone_number: phoneNumber,
-        area_code: '415',
-        plan_type: selectedPlan as 'basic' | 'professional',
-      });
+      const email = user?.primaryEmailAddress?.emailAddress;
+
+      await numbersAPI.purchase(
+        {
+          did: selectedDid,
+          planType: planTypeForPurchase,
+          email: email || undefined,
+        },
+        token,
+      );
 
       setShowPurchaseFlow(false);
-      loadNumbers();
+      setAvailableNumbers([]);
+      setSelectedDid(null);
+      await loadNumbers();
     } catch (err: any) {
       setError(err.message || '购买失败，请稍后重试');
     } finally {
@@ -97,7 +157,7 @@ const VirtualNumbers = () => {
         {/* My Numbers Section */}
         <div>
           <h2 className="text-lg font-semibold mb-4">我的号码</h2>
-          
+
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -144,25 +204,27 @@ const VirtualNumbers = () => {
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
                         <p className="text-sm text-muted-foreground">本月消息</p>
-                        <p className="text-lg font-semibold">{number.messages_sent_this_month + number.messages_received_this_month} 条</p>
+                        <p className="text-lg font-semibold">
+                          {(number.messages_sent_this_month || 0) + (number.messages_received_this_month || 0)} 条
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">下次续费</p>
-                        <p className="text-lg font-semibold">{number.next_billing_date}</p>
+                        <p className="text-lg font-semibold">{number.next_billing_date || '—'}</p>
                       </div>
                     </div>
 
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1"
                         onClick={() => navigate('/messages')}
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
                         查看消息
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex-1"
                       >
                         <CreditCard className="h-4 w-4 mr-2" />
@@ -177,7 +239,7 @@ const VirtualNumbers = () => {
         </div>
 
         {/* Purchase New Number Card */}
-        <Card 
+        <Card
           className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20 cursor-pointer hover:border-primary/40 transition-colors"
           onClick={() => setShowPurchaseFlow(true)}
         >
@@ -216,7 +278,7 @@ const VirtualNumbers = () => {
                   <p className="text-sm text-muted-foreground">不暴露真实手机号，分离工作与生活</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <div className="h-8 w-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Globe className="h-4 w-4 text-blue-600" />
@@ -226,7 +288,7 @@ const VirtualNumbers = () => {
                   <p className="text-sm text-muted-foreground">客户短信自动翻译成你的语言</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3">
                 <div className="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Zap className="h-4 w-4 text-purple-600" />
@@ -246,9 +308,9 @@ const VirtualNumbers = () => {
             <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>购买虚拟号码</CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setShowPurchaseFlow(false)}
                 >
                   ✕
@@ -258,102 +320,114 @@ const VirtualNumbers = () => {
                 {/* Step 1: Select Area Code */}
                 <div>
                   <h3 className="font-semibold mb-3">选择区号</h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {popularAreaCodes.map((area) => (
+                  <div className="flex flex-wrap gap-2">
+                    {popularAreaCodes.map((code) => (
                       <Button
-                        key={area.code}
-                        variant="outline"
-                        className="h-16 flex flex-col items-center justify-center"
+                        key={code.code}
+                        variant={areaCode === code.code ? 'default' : 'outline'}
+                        size="sm"
+                        className="rounded-full"
+                        onClick={() => setAreaCode(code.code)}
                       >
-                        <span className="text-lg font-bold">{area.code}</span>
-                        <span className="text-xs text-muted-foreground">{area.city}</span>
+                        {code.code} · {code.city}
                       </Button>
                     ))}
                   </div>
+
+                  <div className="mt-4">
+                    <Button className="w-full" onClick={searchNumbers} disabled={searching}>
+                      {searching ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          搜索中...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="h-4 w-4 mr-2" />
+                          搜索可用号码
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
 
                 <Separator />
 
-                {/* Step 2: Select Plan */}
+                {/* Step 2: Pick a number */}
+                <div>
+                  <h3 className="font-semibold mb-3">选择号码</h3>
+                  {availableNumbers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">点击上方"搜索可用号码"获取列表</p>
+                  ) : (
+                    <div className="grid gap-2">
+                      {availableNumbers.map((n) => (
+                        <button
+                          key={n.did}
+                          className={
+                            selectedDid === n.did
+                              ? 'w-full text-left rounded-xl border-2 border-primary bg-primary/5 p-3'
+                              : 'w-full text-left rounded-xl border p-3 hover:bg-muted/40'
+                          }
+                          onClick={() => setSelectedDid(n.did)}
+                          type="button"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-semibold text-foreground">{n.did}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {n.ratecenter || n.city || '—'} · {n.province || n.state || 'US'}
+                              </div>
+                            </div>
+                            <Badge variant="outline">SMS</Badge>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Step 3: Plan */}
                 <div>
                   <h3 className="font-semibold mb-3">选择套餐</h3>
-                  <div className="space-y-3">
+                  <div className="grid gap-3">
                     {numberPlans.map((plan) => (
-                      <Card
+                      <button
                         key={plan.id}
-                        className={`cursor-pointer transition-all ${
+                        type="button"
+                        className={
                           selectedPlan === plan.id
-                            ? 'border-primary border-2 bg-primary/5'
-                            : 'border hover:border-primary/50'
-                        }`}
+                            ? 'rounded-2xl border-2 border-primary bg-primary/5 p-4 text-left'
+                            : 'rounded-2xl border p-4 text-left hover:bg-muted/40'
+                        }
                         onClick={() => setSelectedPlan(plan.id)}
                       >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h4 className="font-semibold">{plan.name}</h4>
-                                {plan.recommended && (
-                                  <Badge className="bg-primary text-primary-foreground text-xs">
-                                    推荐
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-2xl font-bold text-primary mb-2">
-                                ${plan.price}<span className="text-sm font-normal text-muted-foreground">/月</span>
-                              </p>
-                              <ul className="space-y-1">
-                                {plan.features.map((feature, idx) => (
-                                  <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
-                                    {feature}
-                                  </li>
-                                ))}
-                              </ul>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold">{plan.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {(plan.features || []).slice(0, 2).join(" · ")}
                             </div>
-                            {selectedPlan === plan.id && (
-                              <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 ml-2" />
-                            )}
                           </div>
-                        </CardContent>
-                      </Card>
+                          <div className="text-right">
+                            <div className="text-lg font-bold">{plan.price}</div>
+                            <div className="text-xs text-muted-foreground">/月</div>
+                          </div>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </div>
 
-                <Separator />
-
-                {/* Summary */}
-                <div className="bg-muted rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-muted-foreground">月费</span>
-                    <span className="font-semibold">
-                      ${numberPlans.find(p => p.id === selectedPlan)?.price}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">首次付款</span>
-                    <span className="font-bold text-lg">
-                      ${numberPlans.find(p => p.id === selectedPlan)?.price}
-                    </span>
-                  </div>
-                </div>
-
-                <Button 
-                  className="w-full h-12 text-base"
-                  onClick={handlePurchase}
-                  disabled={purchasing}
-                >
+                <Button className="w-full h-12" onClick={handlePurchase} disabled={purchasing || !selectedDid}>
                   {purchasing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       购买中...
                     </>
                   ) : (
-                    <>
-                      确认购买
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </>
+                    '确认购买'
                   )}
                 </Button>
               </CardContent>

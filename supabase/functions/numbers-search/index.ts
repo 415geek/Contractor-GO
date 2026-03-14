@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { VoIPMSClient } from "../_shared/voipms/client.ts"
+import { verifyClerkAuthHeader } from "../_shared/clerk/verify.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,9 @@ serve(async (req) => {
   }
 
   try {
+    // Require Clerk auth
+    await verifyClerkAuthHeader(req.headers.get('Authorization'))
+
     if (req.method !== 'GET') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
@@ -50,8 +54,10 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('[numbers-search] Error', error)
-    return new Response(JSON.stringify({ error: (error as any)?.message || 'Internal server error' }), {
-      status: 500,
+    const msg = (error as any)?.message || 'Internal server error'
+    const status = msg === 'Unauthorized' ? 401 : 500
+    return new Response(JSON.stringify({ error: msg }), {
+      status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
