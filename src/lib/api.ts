@@ -20,13 +20,26 @@ const clearToken = () => {
   localStorage.removeItem('auth_token');
 };
 
-// 通用请求函数
+const parseResponse = async (response: Response) => {
+  const text = await response.text();
+
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = { raw: text };
+  }
+
+  return { data, text };
+};
+
+// 通用请求函数（带 token）
 const request = async (
   endpoint: string,
   options: RequestInit = {}
 ): Promise<any> => {
   const token = getToken();
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -40,26 +53,58 @@ const request = async (
 
   console.log(`[API] Request: ${options.method || 'GET'} ${url}`);
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
 
-    console.log(`[API] Response status: ${response.status}`);
+  console.log(`[API] Response status: ${response.status}`);
 
-    const data = await response.json();
-    console.log(`[API] Response data:`, data);
+  const { data } = await parseResponse(response);
+  console.log(`[API] Response data:`, data);
 
-    if (!response.ok) {
-      throw new Error(data.error || data.details || 'Request failed');
-    }
-
-    return data;
-  } catch (error) {
-    console.error(`[API] ${endpoint} error:`, error);
-    throw error;
+  if (!response.ok) {
+    const message =
+      (data && (data.error || data.details || data.message)) ||
+      `Request failed (${response.status})`;
+    throw new Error(message);
   }
+
+  return data;
+};
+
+// 公共请求函数（不带 token，避免 Clerk 切换后 token 影响 Supabase Functions）
+const requestPublic = async (
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<any> => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  const url = `${API_BASE_URL}/functions/v1${endpoint}`;
+
+  console.log(`[API] Public request: ${options.method || 'GET'} ${url}`);
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  console.log(`[API] Public response status: ${response.status}`);
+
+  const { data } = await parseResponse(response);
+  console.log(`[API] Public response data:`, data);
+
+  if (!response.ok) {
+    const message =
+      (data && (data.error || data.details || data.message)) ||
+      `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+
+  return data;
 };
 
 // =============================================
@@ -242,27 +287,7 @@ export const invoicesAPI = {
   },
 
   // 创建发票
-  createInvoice: async (data: {
-    client_name: string;
-    client_email?: string;
-    client_address?: string;
-    project_id?: string;
-    items: Array<{
-      description: string;
-      description_translated?: string;
-      quantity: number;
-      unit?: string;
-      unit_price: number;
-    }>;
-    tax_rate?: number;
-    discount_amount?: number;
-    payment_methods?: string[];
-    payment_instructions?: string;
-    notes?: string;
-    terms?: string;
-    language?: string;
-    due_date?: string;
-  }) => {
+  createInvoice: async (data: any) => {
     return request('/invoices-crud', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -283,12 +308,6 @@ export const invoicesAPI = {
       method: 'DELETE',
     });
   },
-
-  // 发送发票
-  sendInvoice: async (id: string, conversationId: string) => {
-    // TODO: Implement
-    return Promise.resolve({});
-  },
 };
 
 // =============================================
@@ -301,13 +320,8 @@ export const virtualNumbersAPI = {
     return request('/virtual-numbers-crud');
   },
 
-  // 购买虚拟号码
-  purchaseNumber: async (data: {
-    phone_number: string;
-    area_code?: string;
-    plan_type: 'basic' | 'professional';
-    provider_number_id?: string;
-  }) => {
+  // 创建虚拟号码
+  createNumber: async (data: any) => {
     return request('/virtual-numbers-crud', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -315,11 +329,7 @@ export const virtualNumbersAPI = {
   },
 
   // 更新虚拟号码
-  updateNumber: async (id: string, data: {
-    status?: 'active' | 'suspended' | 'released';
-    auto_renew?: boolean;
-    plan_type?: 'basic' | 'professional';
-  }) => {
+  updateNumber: async (id: string, data: any) => {
     return request(`/virtual-numbers-crud?id=${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -356,7 +366,7 @@ export const toolsAPI = {
   materialRecognize: async (data: {
     images: string[];
   }) => {
-    return request('/tools-material-recognize', {
+    return requestPublic('/tools-material-recognize', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -378,7 +388,7 @@ export const toolsAPI = {
     };
     search_radius_km?: number;
   }) => {
-    return request('/tools-material-compare', {
+    return requestPublic('/tools-material-compare', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -395,7 +405,7 @@ export const toolsAPI = {
     quality?: 'economy' | 'standard' | 'premium';
     property_type?: 'residential' | 'commercial';
   }) => {
-    return request('/tools-house-estimate', {
+    return requestPublic('/tools-house-estimate', {
       method: 'POST',
       body: JSON.stringify(data),
     });

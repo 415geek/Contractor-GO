@@ -22,12 +22,48 @@ const MaterialSearch = () => {
   const [recognitionResult, setRecognitionResult] = useState<any>(null);
   const [compareResult, setCompareResult] = useState<any>(null);
 
+  const compressImage = async (dataUrl: string) => {
+    const img = new Image();
+    img.src = dataUrl;
+
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('图片加载失败'));
+    });
+
+    const maxDim = 1280;
+    const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const w = Math.max(1, Math.round(img.width * scale));
+    const h = Math.max(1, Math.round(img.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return dataUrl;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // Convert to JPEG to reduce payload size
+    const out = canvas.toDataURL('image/jpeg', 0.78);
+    return out;
+  };
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
+      reader.onloadend = async () => {
+        try {
+          const raw = reader.result as string;
+          const compressed = await compressImage(raw);
+          setImage(compressed);
+        } catch {
+          setImage(reader.result as string);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -39,6 +75,8 @@ const MaterialSearch = () => {
     try {
       setLoading(true);
       setError('');
+
+      console.log('[MaterialSearch] recognize payload size (chars):', image.length);
 
       const result = await toolsAPI.materialRecognize({
         images: [image],
