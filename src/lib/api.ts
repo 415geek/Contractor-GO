@@ -9,8 +9,24 @@ const SUPABASE_DEFAULT_URL =
 // Default: Supabase Edge Functions
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || SUPABASE_DEFAULT_URL;
 
+const inferNumbersApiBaseUrl = () => {
+  const configured = import.meta.env.VITE_NUMBERS_API_BASE_URL as string | undefined;
+  if (configured) return configured;
+
+  // If the app is running on the production domain, default to the self-hosted API.
+  // This avoids requiring a deploy-time env var in platforms that don't expose it.
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host === 'contractorgo.io' || host.endsWith('.contractorgo.io')) {
+      return 'https://api.contractorgo.io';
+    }
+  }
+
+  return API_BASE_URL;
+};
+
 // Optional: self-hosted backend for stable outbound IP (e.g. VoIP.ms / Stripe)
-const NUMBERS_API_BASE_URL = import.meta.env.VITE_NUMBERS_API_BASE_URL || API_BASE_URL;
+const NUMBERS_API_BASE_URL = inferNumbersApiBaseUrl();
 
 const joinUrl = (base: string, path: string) => {
   const b = base.replace(/\/$/, '');
