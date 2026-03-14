@@ -108,28 +108,6 @@ const requestPublic = async (
 };
 
 // =============================================
-// 号码（VoIP.ms）API
-// =============================================
-
-export const numbersAPI = {
-  search: async (params: { areaCode?: string; state?: string; ratecenter?: string }) => {
-    const qs = new URLSearchParams();
-    if (params.areaCode) qs.set('areaCode', params.areaCode);
-    if (params.state) qs.set('state', params.state);
-    if (params.ratecenter) qs.set('ratecenter', params.ratecenter);
-
-    return requestPublic(`/numbers-search?${qs.toString()}`);
-  },
-
-  purchase: async (data: { did: string; planType?: 'BASIC' | 'PRO' | 'BUSINESS'; packageName?: string; email?: string }) => {
-    return requestPublic('/numbers-purchase', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-};
-
-// =============================================
 // 认证 API
 // =============================================
 
@@ -442,7 +420,6 @@ export default {
   invoices: invoicesAPI,
   virtualNumbers: virtualNumbersAPI,
   tools: toolsAPI,
-  numbers: numbersAPI,
   getToken,
   setToken,
   clearToken,
