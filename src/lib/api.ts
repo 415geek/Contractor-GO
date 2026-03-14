@@ -3,7 +3,30 @@
  * 统一的API调用客户端
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://gkcjbcrjnjfibxbxubge.supabase.co';
+const SUPABASE_DEFAULT_URL =
+  import.meta.env.VITE_SUPABASE_URL || 'https://gkcjbcrjnjfibxbxubge.supabase.co';
+
+// Default: Supabase Edge Functions
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || SUPABASE_DEFAULT_URL;
+
+// Optional: self-hosted backend for stable outbound IP (e.g. VoIP.ms / Stripe)
+const NUMBERS_API_BASE_URL = import.meta.env.VITE_NUMBERS_API_BASE_URL || API_BASE_URL;
+
+const joinUrl = (base: string, path: string) => {
+  const b = base.replace(/\/$/, '');
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${b}${p}`;
+};
+
+const buildApiUrl = (base: string, endpoint: string) => {
+  // Backwards compatibility:
+  // - Supabase Edge Functions live under /functions/v1
+  // - Self-hosted backend usually exposes endpoints at root (e.g. /numbers-search)
+  if (base.includes('supabase.co')) {
+    return joinUrl(base, `/functions/v1${endpoint}`);
+  }
+  return joinUrl(base, endpoint);
+};
 
 // 获取存储的token
 const getToken = (): string | null => {
@@ -36,7 +59,8 @@ const parseResponse = async (response: Response) => {
 // 通用请求函数（带 token）
 const request = async (
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  baseUrl: string = API_BASE_URL,
 ): Promise<any> => {
   const token = getToken();
 
@@ -49,7 +73,7 @@ const request = async (
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = `${API_BASE_URL}/functions/v1${endpoint}`;
+  const url = buildApiUrl(baseUrl, endpoint);
 
   console.log(`[API] Request: ${options.method || 'GET'} ${url}`);
 
@@ -76,14 +100,15 @@ const request = async (
 // Public request helper (no Authorization header by default)
 const requestPublic = async (
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  baseUrl: string = API_BASE_URL,
 ): Promise<any> => {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
-  const url = `${API_BASE_URL}/functions/v1${endpoint}`;
+  const url = buildApiUrl(baseUrl, endpoint);
 
   console.log(`[API] Public request: ${options.method || 'GET'} ${url}`);
 
@@ -113,39 +138,54 @@ const requestPublic = async (
 
 export const numbersAPI = {
   list: async (clerkToken: string) => {
-    return requestPublic('/numbers-list', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${clerkToken}`,
+    return requestPublic(
+      '/numbers-list',
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${clerkToken}`,
+        },
       },
-    });
+      NUMBERS_API_BASE_URL,
+    );
   },
 
-  search: async (params: { areaCode?: string; state?: string; ratecenter?: string }, clerkToken: string) => {
+  search: async (
+    params: { areaCode?: string; state?: string; ratecenter?: string },
+    clerkToken: string,
+  ) => {
     const qs = new URLSearchParams();
     if (params.areaCode) qs.set('areaCode', params.areaCode);
     if (params.state) qs.set('state', params.state);
     if (params.ratecenter) qs.set('ratecenter', params.ratecenter);
 
-    return requestPublic(`/numbers-search?${qs.toString()}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${clerkToken}`,
+    return requestPublic(
+      `/numbers-search?${qs.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${clerkToken}`,
+        },
       },
-    });
+      NUMBERS_API_BASE_URL,
+    );
   },
 
   purchase: async (
     data: { did: string; planType?: 'BASIC' | 'PRO' | 'BUSINESS'; packageName?: string; email?: string },
     clerkToken: string,
   ) => {
-    return requestPublic('/numbers-purchase', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${clerkToken}`,
+    return requestPublic(
+      '/numbers-purchase',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${clerkToken}`,
+        },
+        body: JSON.stringify(data),
       },
-      body: JSON.stringify(data),
-    });
+      NUMBERS_API_BASE_URL,
+    );
   },
 };
 
