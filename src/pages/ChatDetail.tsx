@@ -2,8 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ChevronLeft, MoreHorizontal, Send, Paperclip, Mic, Phone, 
+import {
+  ChevronLeft, MoreHorizontal, Send, Paperclip, Mic, Phone,
   Video, Info, Globe, Copy, Reply, Trash2, ChevronDown, ChevronUp,
   Loader2
 } from 'lucide-react';
@@ -20,12 +20,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { messagesAPI } from '@/lib/api';
 import { useMessagesWebSocket } from '@/hooks/useWebSocket';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@clerk/clerk-react';
 
 const ChatDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useUser();
   const [input, setInput] = useState('');
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
   const [messages, setMessages] = useState<any[]>([]);
@@ -53,9 +53,9 @@ const ChatDetail = () => {
   // 处理消息已读
   useEffect(() => {
     if (messageRead) {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageRead.message_id 
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageRead.message_id
             ? { ...msg, status: 'read', read_at: messageRead.read_at }
             : msg
         )
@@ -142,7 +142,7 @@ const ChatDetail = () => {
         </div>
         <div className="flex-1 overflow-y-auto">
           {chats.map((chat) => (
-            <div 
+            <div
               key={chat.id}
               onClick={() => navigate(`/chat/${chat.id}`)}
               className={cn(

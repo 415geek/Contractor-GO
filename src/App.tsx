@@ -3,7 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useUser } from "@clerk/clerk-react";
+
 import { ClerkProvider } from "./providers/ClerkProvider";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import RestaurantDashboard from "./pages/RestaurantDashboard";
@@ -21,23 +26,20 @@ import Accounting from "./pages/Accounting";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import TestAPI from "./pages/TestAPI";
 import Tools from "./pages/Tools";
 import VirtualNumbers from "./pages/VirtualNumbers";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { LanguageProvider } from "./contexts/LanguageContext";
+import TestAPI from "./pages/TestAPI";
 
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
-  const { session, loading } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
 
-  if (loading) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
-          <div className="h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-slate-500">加载中...</p>
         </div>
       </div>
@@ -47,11 +49,11 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Public routes */}
-      <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <Landing />} />
-      <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Login />} />
-      <Route path="/register" element={session ? <Navigate to="/dashboard" replace /> : <Register />} />
+      <Route path="/" element={isSignedIn ? <Navigate to="/dashboard" replace /> : <Landing />} />
+      <Route path="/login/*" element={isSignedIn ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/register/*" element={isSignedIn ? <Navigate to="/dashboard" replace /> : <Register />} />
       <Route path="/test-api" element={<TestAPI />} />
-      
+
       {/* Protected routes */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
@@ -70,7 +72,7 @@ const AppRoutes = () => {
         <Route path="/tools" element={<Tools />} />
         <Route path="/virtual-numbers" element={<VirtualNumbers />} />
       </Route>
-      
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -84,9 +86,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <LanguageProvider>
-            <AuthProvider>
-              <AppRoutes />
-            </AuthProvider>
+            <AppRoutes />
           </LanguageProvider>
         </BrowserRouter>
       </TooltipProvider>

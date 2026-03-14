@@ -1,13 +1,17 @@
 "use client";
 
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUser } from '@clerk/clerk-react';
 import { Navigate, Outlet } from 'react-router-dom';
 
 const ProtectedRoute = () => {
-  const { session } = useAuth();
+  const { isLoaded, isSignedIn } = useUser();
 
-  if (!session) {
+  if (!isLoaded) {
+    return null;
+  }
+
+  if (!isSignedIn) {
     return <Navigate to="/login" replace />;
   }
 

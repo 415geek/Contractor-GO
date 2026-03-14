@@ -3,28 +3,33 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppLayout from '@/components/AppLayout';
-import { 
-  Settings, 
-  Wallet, 
-  Bookmark, 
+import {
+  Settings,
+  Wallet,
+  Bookmark,
   ChevronRight,
   Star,
   QrCode,
   CreditCard,
   FileText,
+  LogOut,
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { useAuth, useUser } from '@clerk/clerk-react';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { signOut } = useAuth();
+  const { user } = useUser();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate('/login');
   };
+
+  const displayName = user?.fullName || user?.firstName || user?.primaryEmailAddress?.emailAddress || '用户';
+  const initial = (displayName || '用')[0];
 
   const menuGroups = [
     {
@@ -54,11 +59,11 @@ const Profile = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center">
               <div className="h-16 w-16 rounded-xl bg-[#07C160] flex items-center justify-center overflow-hidden">
-                <span className="text-white text-2xl font-bold">王</span>
+                <span className="text-white text-2xl font-bold">{initial}</span>
               </div>
               <div className="ml-4">
-                <h2 className="text-lg font-medium text-foreground">老王</h2>
-                <p className="text-sm text-muted-foreground">Builder+ ID: Pro_Wang_NY</p>
+                <h2 className="text-lg font-medium text-foreground">{displayName}</h2>
+                <p className="text-sm text-muted-foreground">Clerk ID: {user?.id?.slice(0, 8) || '—'}</p>
               </div>
             </div>
 
@@ -79,6 +84,13 @@ const Profile = () => {
                 <div className="text-xs text-muted-foreground">从业经验</div>
               </div>
             </div>
+
+            <div className="mt-6">
+              <Button variant="outline" className="w-full rounded-xl" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                退出登录
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -88,11 +100,11 @@ const Profile = () => {
           <div className="bg-white rounded-lg p-4 md:hidden">
             <div className="flex items-center">
               <div className="h-12 w-12 rounded-xl bg-[#07C160] flex items-center justify-center overflow-hidden">
-                <span className="text-white text-xl font-bold">王</span>
+                <span className="text-white text-xl font-bold">{initial}</span>
               </div>
               <div className="ml-3 flex-1">
-                <h2 className="text-base font-medium text-foreground">老王</h2>
-                <p className="text-xs text-muted-foreground">Builder+ ID: Pro_Wang_NY</p>
+                <h2 className="text-base font-medium text-foreground">{displayName}</h2>
+                <p className="text-xs text-muted-foreground">Clerk ID: {user?.id?.slice(0, 8) || '—'}</p>
               </div>
               <div className="flex items-center space-x-2">
                 <QrCode className="h-5 w-5 text-muted-foreground" />
@@ -119,54 +131,39 @@ const Profile = () => {
                 <div className="text-xs text-muted-foreground">从业经验</div>
               </div>
             </div>
+
+            <div className="mt-4">
+              <Button variant="outline" className="w-full rounded-xl" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                退出登录
+              </Button>
+            </div>
           </div>
 
-          {/* Menu Items */}
-          <div className="space-y-4 mt-4">
-            {menuGroups.map((group, gIdx) => (
-              <div key={gIdx} className="bg-white rounded-lg shadow-sm border">
-                {group.items.map((item, idx) => (
-                  <div 
+          {/* Menu Groups */}
+          <div className="space-y-4 mt-4 md:mt-0">
+            {menuGroups.map((group, groupIndex) => (
+              <div key={groupIndex} className="bg-white rounded-lg overflow-hidden">
+                {group.items.map((item, itemIndex) => (
+                  <button
                     key={item.id}
-                    onClick={() => item.path && navigate(item.path)}
                     className={cn(
-                      "flex items-center px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors",
-                      idx !== group.items.length - 1 && "border-b"
+                      "w-full flex items-center p-4 hover:bg-muted/30 transition-colors",
+                      itemIndex !== group.items.length - 1 && "border-b"
                     )}
+                    onClick={() => item.path && navigate(item.path)}
                   >
-                    <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", item.color)}>
+                    <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", item.color)}>
                       <item.icon className="h-5 w-5 text-white" />
                     </div>
-                    <span className="ml-3 flex-1 text-sm font-medium text-foreground">{item.name}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
+                    <div className="ml-3 flex-1 text-left">
+                      <div className="text-sm font-medium text-foreground">{item.name}</div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </button>
                 ))}
               </div>
             ))}
-
-            {/* Logout */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div 
-                onClick={handleLogout}
-                className="flex items-center justify-center py-3 hover:bg-muted/50 cursor-pointer transition-colors"
-              >
-                <span className="text-sm font-medium text-destructive">退出登录</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Additional Info */}
-          <div className="hidden md:grid md:grid-cols-2 md:gap-6 mt-6">
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
-              <h3 className="font-semibold text-blue-600 mb-2">账户状态</h3>
-              <p className="text-lg font-bold">专业版</p>
-              <p className="text-sm text-blue-600/70">有效期至 2024-12-31</p>
-            </div>
-            <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-              <h3 className="font-semibold text-green-600 mb-2">存储空间</h3>
-              <p className="text-lg font-bold">2.3GB/5GB</p>
-              <p className="text-sm text-green-600/70">46% 已使用</p>
-            </div>
           </div>
         </div>
       </div>
